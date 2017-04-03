@@ -20,6 +20,10 @@ from scipy.sparse.linalg import eigs as eigs_sparse
 from scipy.sparse.linalg import eigsh as eigsh_sparse
 
 # ----------------------------------------------------------------------
+
+from CubeTetras import CubeTetras
+
+# ----------------------------------------------------------------------
 class ExactDiagonalization(object):
 
     # ------------------------------------------------------------------
@@ -186,7 +190,6 @@ class ExactDiagonalization(object):
             t[sidx] = self.beta + t[sidx]
             return sign * np.interp(t, tau_g, g)
 
-        #t1, t2, t3 = np.meshgrid(tau, tau, tau, indexing='xy')
         t1, t2, t3 = np.meshgrid(tau, tau, tau, indexing='ij')
         G4 = gint(t1-t2)*gint(t3) - gint(t1)*gint(t3-t2)
             

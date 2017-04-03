@@ -7,6 +7,9 @@ Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com """
 
 # ----------------------------------------------------------------------
 
+import itertools
+import numpy as np
+
 # ----------------------------------------------------------------------
 class CubeTetras(object):
 
