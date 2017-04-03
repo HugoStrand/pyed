@@ -1,19 +1,21 @@
 **PYED**: Simple exact diagonalization routines for finite quantum systems
 Copyright (C) 2017, H. U.R. Strand
 
-1. Documentation
+# Documentation
 
 Todo
 
-2. Installation
+$g(\tau) = \langle \mathcal{T} c(\tau) c^\dagger(\tau') \rangle$
+
+# Installation
 
 Todo
 
-3. Version
+# Version
 
 Todo
 
-4. License
+# License
 
 This application is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the Free
