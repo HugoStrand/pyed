@@ -5,6 +5,8 @@ Purpose:
     Set up sparse matrix representations for some common operators
     in the occupation number basis.
 
+Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
+
 Example usage:
 
 >>> from pyGutz.FockStates import *
