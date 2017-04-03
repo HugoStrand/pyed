@@ -5,12 +5,8 @@ Copyright (C) 2017, H. U.R. Strand
 
 Todo
 
-<<<<<<< HEAD:README.md
-$g(\tau) = \langle \mathcal{T} c(\tau) c^\dagger(\tau') \rangle$
-=======
 .. math::
    g(\tau) = \langle \mathcal{T} c(\tau) c^\dagger(\tau') \rangle
->>>>>>> testing math:README.rst
 
 # Installation
 
