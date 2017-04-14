@@ -200,7 +200,6 @@ class ExactDiagonalization(object):
         
         N = len(tau)
         G4 = np.zeros((N, N, N), dtype=np.complex)
-        G4_ref = np.zeros((N, N, N), dtype=np.complex)
         ops = np.array(ops)
 
         for tidx, tetra in enumerate(CubeTetras(tau)):
@@ -216,7 +215,7 @@ class ExactDiagonalization(object):
                 taus_perm, ops_perm) * perm_sign
             
         return G4
-
+    
     # ------------------------------------------------------------------
     def get_timeordered_three_tau_greens_function(self, taus, ops):
 
@@ -262,6 +261,36 @@ class ExactDiagonalization(object):
             G = np.einsum(
                 'ta,tb,tc,td,ab,bc,cd,da->t',
                 et_a, et_b, et_c, et_d, op1, op2, op3, op4)
+
+        G /= self.Z        
+        return G
+
+    # ------------------------------------------------------------------
+    def get_tau_greens_function_component(self, tau, op1, op2):
+
+        r"""
+        G(t) = - < b(t) b^+(o) > 
+             = - 1/Z Tr[ e^{-\beta H} e^{t H} b e^{-t H} b^+]
+             = -1/Z \sum_n e^{-\beta E_n} \sum_m e^{-t(E_m-E_n)} <n|b|m><m|b^+|n>
+
+        with 
+        U_p(t) = \sum_n |n> e^{(t-\beta)E_n} <n|
+        U_m(t) = \sum_m |m> e^{-t E_m} <m|
+
+        this takes the form
+
+        G(t) = -1/Z Tr[ U_p(t) b U_m(t) b^+ ]
+
+        """
+
+        G = np.zeros((len(tau)), dtype=np.complex)
+
+        op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
+        
+        et_p = np.exp((-self.beta + tau[:,None])*self.E[None,:])
+        et_m = np.exp(-tau[:,None]*self.E[None,:])
+        
+        G = -np.einsum('tn,tm,nm,mn->t', et_p, et_m, op1_eig, op2_eig)
 
         G /= self.Z        
         return G
@@ -363,7 +392,54 @@ class ExactDiagonalization(object):
             return G, G0
         else:
             return G
+
+    # ------------------------------------------------------------------
+    def get_frequency_greens_function_component(self, iwn, op1, op2, xi):
+        
+        # -- Components of the Lehman expression
+        dE = - self.E[:, None] + self.E[None, :]
+        exp_bE = np.exp(-self.beta * self.E)
+        M = exp_bE[:, None] - xi * exp_bE[None, :]
+
+        inv_freq = iwn[:, None, None] - dE[None, :, :]
+        nonzero_idx = np.nonzero(inv_freq)
+        # -- Only eval for non-zero values
+        freq = np.zeros_like(inv_freq)
+        freq[nonzero_idx] = inv_freq[nonzero_idx]**(-1)
+
+        op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
+
+        # -- Compute Lehman sum for all operator combinations
+        G = np.zeros((len(iwn)), dtype=np.complex)
+        G = np.einsum('nm,mn,nm,znm->z', op1_eig, op2_eig, M, freq)
+        G /= self.Z
+
+        return G        
     
+    # ------------------------------------------------------------------
+    def get_high_frequency_tail_coeff_component(
+            self, op1, op2, xi, Norder=3):
+        
+        def xi_commutator(A, B, xi):
+            return A * B - xi * B * A
+            
+        def commutator(A, B):
+            return A * B - B * A
+
+        H = self.H
+        
+        Gc = np.zeros((Norder), dtype=np.complex)
+        ba, bc = op1, op2
+
+        Hba = ba
+        for order in xrange(Norder):
+            tail_op = xi_commutator(Hba, bc, xi)                
+            Gc[order] = (-1.)**(order) * \
+                        self.get_expectation_value(tail_op)
+            Hba = commutator(H, Hba)
+                
+        return Gc
+
     # ------------------------------------------------------------------
     def get_high_frequency_tail_coeff(self, op_vec, xi, Norder=3):
 

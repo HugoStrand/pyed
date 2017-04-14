@@ -175,9 +175,9 @@ class SpinOperators:
         # S_y = -i*0.5*(c*_u c_d - c*_d c_u)
         # S_z =    0.5*(c*_u c_u - c*_d c_d)
 
-        Sx = sparse.csr_matrix((self.nstates, self.nstates), dtype='complex')
-        Sy = sparse.csr_matrix((self.nstates, self.nstates), dtype='complex')
-        Sz = sparse.csr_matrix((self.nstates, self.nstates), dtype='complex')
+        Sx = sparse.csr_matrix((self.nstates, self.nstates), dtype=np.float)
+        Sy = sparse.csr_matrix((self.nstates, self.nstates), dtype=np.complex)
+        Sz = sparse.csr_matrix((self.nstates, self.nstates), dtype=np.float)
 
         for cup, cdown, cdagup, cdagdown in zip(self.c[0::2], self.c[1::2],
                                                 self.cdagger[0::2], self.cdagger[1::2]):
@@ -198,11 +198,11 @@ class SpinOperators:
         self.Ndown = 0.5*self.N - self.Sz # Total number of spin down
 
         # -- On-site double occupancy
-        self.D = sparse.csr_matrix((self.nstates, self.nstates), dtype='complex')
+        self.D = sparse.csr_matrix((self.nstates, self.nstates), dtype=np.float)
         for nup, ndown in zip(self.n[0::2], self.n[1::2]):
             self.D = self.D + nup * ndown 
 
-        self.I = sparse.eye(self.nstates, self.nstates, dtype='complex', format='csr')
+        self.I = sparse.eye(self.nstates, self.nstates, dtype=np.float, format='csr')
 
 # ----------------------------------------------------------------------
 class AngularMomentumOperators:
