@@ -12,12 +12,8 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-#from pyed.FockStates import ManyBodyOperatorFactory
-
 from pyed.ExactDiagonalization import ExactDiagonalization
 from pyed.SparseMatrixFockStates import SparseMatrixRepresentation
-
-from pyCollocation.Matsubara import matsubara_frequencies
 
 # ----------------------------------------------------------------------
 
@@ -42,7 +38,6 @@ class TriqsED(object):
     # ------------------------------------------------------------------
     def set_g2_tau(self, g_tau, op1, op2):
 
-        
         assert( type(g_tau.mesh) == MeshImTime )
         assert( self.beta == g_tau.mesh.beta )
         assert( g_tau.target_shape == (1, 1) )
@@ -99,29 +94,40 @@ class TriqsED(object):
 
         mesh_prod = g40_tau.mesh
 
-        # why is a product mesh a list of tuples of meshes?
-        
-        for mesh_tuple in mesh_prod:
-            assert( len(mesh_tuple) == 1 )
-            mesh = mesh_tuple[0]
+        for mesh in g40_tau.mesh.components:
             assert( type(mesh) == MeshImTime )
             assert( mesh.beta == g_tau.mesh.beta )
         
         assert( g_tau.target_shape == g40_tau.target_shape )
 
-        meshes = [ mesh_tuple[0] for mesh_tuple in mesh_prod ]
+        for (i1, t1), (i2, t2), (i3, t3) in itertools.product(*[
+                enumerate(mesh) for mesh in g40_tau.mesh.components]):
 
-        for t in g_tau.mesh:
-            print t, g_tau(t.real)
-            print t, g_tau[[t]]
+            t1, t2, t3 = t1.real, t2.real, t3.real
+            g40_tau[[i1, i2, i3]][:] = \
+                g_tau(t1-t2)*g_tau(t3) - g_tau(t1)*g_tau(t3-t2)
+    
+    # ------------------------------------------------------------------
+    def set_g4_tau(self, g4_tau, op1, op2, op3, op4):
+
+        assert( type(g4_tau.mesh) == MeshProduct )
+
+        mesh_prod = g4_tau.mesh
+
+        for mesh in g4_tau.mesh.components:
+            assert( type(mesh) == MeshImTime )
+            assert( mesh.beta == self.beta )
         
-        
-        for t1, t2, t3 in itertools.product(*meshes):
-            g40_tau[[t1, t2, t3]] = \
-                g_tau[[t1-t2]]*g_tau[[t3]] - g_tau[[t1]]*g_tau[[t3-t2]]
-        
-   # ------------------------------------------------------------------
-        #----------------------------------------------------------------------
+        assert( g4_tau.target_shape == (1,1) )
+
+        # -- foobar
+        # -- add the two gf calculator here
+
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------
+   
+#----------------------------------------------------------------------
 if __name__ == '__main__':
     
     # ------------------------------------------------------------------
@@ -148,7 +154,15 @@ if __name__ == '__main__':
               c_dag(do,0)*c(do,2) + c_dag(do,2)*c(do,0) )
     
     # ------------------------------------------------------------------
-    # -- Green's functions
+    # -- Exact diagonalization
+
+    fundamental_operators = [
+        c(up,0), c(do,0), c(up,1), c(do,1), c(up,2), c(do,2)]
+    
+    ed = TriqsED(H, fundamental_operators, beta)
+
+    # ------------------------------------------------------------------
+    # -- Single-particle Green's functions
 
     from pytriqs.gf import Gf
     from pytriqs.gf import MeshImTime, MeshProduct
@@ -158,26 +172,26 @@ if __name__ == '__main__':
                      statistic='Fermion', n_points=100,
                      indices=[1])
 
-    g_iwn = GfImFreq(name='g_tau', beta=beta,
+    g_iwn = GfImFreq(name='g_iwn', beta=beta,
                      statistic='Fermion', n_points=10,
                      indices=[1])
     
-    fundamental_operators = [
-        c(up,0), c(do,0), c(up,1), c(do,1), c(up,2), c(do,2)]
-    
-    ed = TriqsED(H, fundamental_operators, beta)
-
     ed.set_g2_tau(g_tau, c(up,0), c_dag(up,0))
     ed.set_g2_iwn(g_iwn, c(up,0), c_dag(up,0))
 
+    # ------------------------------------------------------------------
+    # -- Two particle Green's functions
+    
     ntau = 10
     imtime = MeshImTime(beta, 'Fermion', ntau)
-    prodmesh = MeshProduct([imtime, imtime, imtime])
+    prodmesh = MeshProduct(imtime, imtime, imtime)
+
     g40_tau = Gf(name='g40_tau', mesh=prodmesh, indices=[1])
+    g4_tau = Gf(name='g4_tau', mesh=prodmesh, indices=[1])
 
     ed.set_g40_tau(g40_tau, g_tau)
+    ed.set_g4_tau(g40_tau, c(up,0), c_dag(up,0), c(up,0), c_dag(up,0))
 
-    set
     exit()
     
     from pytriqs.plot.mpl_interface import oplot
@@ -194,19 +208,7 @@ if __name__ == '__main__':
     plt.show()
     
     exit()
-    
-    ntau = 50
-    eps = 1e-4 * beta
-    tau = np.linspace(0 + eps, beta - eps, num=ntau)
 
-    op_vec = [op.c[0]]
-    g_tau = ed.get_tau_greens_function(tau, op_vec)
-
-    nw = 10
-    xi = -1.0
-    iwn = matsubara_frequencies(nw, beta, xi=xi)
-    g_iwn = ed.get_frequency_greens_function(iwn, op_vec, xi)
-        
     ntau2 = 5
     tau2 = np.linspace(0+eps, beta-eps, num=ntau2)
 
