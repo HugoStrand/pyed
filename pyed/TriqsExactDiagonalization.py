@@ -1,4 +1,10 @@
 
+""" 
+Exact diagonalization and single- and two-particle Green's function calculator for Triqs operator expressions.
+
+Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
+"""
+
 # ----------------------------------------------------------------------
 
 import itertools
@@ -11,7 +17,7 @@ from pytriqs.gf import MeshImTime, MeshProduct
 # ----------------------------------------------------------------------
 
 from pyed.CubeTetras import CubeTetrasMesh, enumerate_tau3
-from pyed.ExactDiagonalization import ExactDiagonalization
+from pyed.SparseExactDiagonalization import SparseExactDiagonalization
 from pyed.SparseMatrixFockStates import SparseMatrixRepresentation
 
 # ----------------------------------------------------------------------
@@ -24,7 +30,8 @@ class TriqsExactDiagonalization(object):
 
         self.beta = beta
         self.rep = SparseMatrixRepresentation(fundamental_operators)
-        self.ed = ExactDiagonalization(self.rep.sparse_matrix(H), beta)
+        self.ed = SparseExactDiagonalization(
+            self.rep.sparse_matrix(H), beta)
 
     # ------------------------------------------------------------------
     def set_g2_tau(self, g_tau, op1, op2):
@@ -112,3 +119,4 @@ class TriqsExactDiagonalization(object):
 
     # ------------------------------------------------------------------
    
+# ----------------------------------------------------------------------

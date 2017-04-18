@@ -1,3 +1,11 @@
+
+""" 
+Tests for conversion from Triqs expression to 
+sparse matrix representation.
+
+Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com 
+"""
+
 # ----------------------------------------------------------------------
 
 import numpy as np
@@ -9,7 +17,6 @@ from pytriqs.operators import c, c_dag
 # ----------------------------------------------------------------------
 
 from pyed.SparseMatrixFockStates import SparseMatrixRepresentation
-from pyed.FockStates import ManyBodyOperatorFactory
 
 # ----------------------------------------------------------------------
 def compare_sparse_matrices(A, B):
@@ -26,8 +33,6 @@ def compare_sparse_matrices(A, B):
 # ----------------------------------------------------------------------
 def test_sparse_matrix_representation():
     
-    op = ManyBodyOperatorFactory(norbs=2)
-
     up, do = 0, 1
     fundamental_operators = [c(up,0), c(do,0)]
     
@@ -35,18 +40,20 @@ def test_sparse_matrix_representation():
 
     # -- Test an operator
     O_mat = rep.sparse_matrix(c(up, 0))
-    O_ref = op.c[0]
+    O_ref = rep.sparse_operators.c_dag[0].getH()
     compare_sparse_matrices(O_mat, O_ref)
 
     # -- Test
     O_mat = rep.sparse_matrix(c(do, 0))
-    O_ref = op.c[1]
+    O_ref = rep.sparse_operators.c_dag[1].getH()
     compare_sparse_matrices(O_mat, O_ref)
 
     # -- Test expression
     H_expr = c(up, 0) * c(do, 0) * c_dag(up, 0) * c_dag(do, 0)
     H_mat = rep.sparse_matrix(H_expr)
-    H_ref = op.c[0] * op.c[1] * op.cdagger[0] * op.cdagger[1]
+    c_dag0, c_dag1 = rep.sparse_operators.c_dag
+    c_0, c_1 = c_dag0.getH(), c_dag1.getH()
+    H_ref = c_0 * c_1 * c_dag0 * c_dag1
     compare_sparse_matrices(H_mat, H_ref)
 
 # ----------------------------------------------------------------------
@@ -85,8 +92,15 @@ def test_trimer_hamiltonian():
     H_mat = rep.sparse_matrix(H_expr)
     
     # -- explicit construction
-    
-    op = ManyBodyOperatorFactory(norbs=6)
+
+    class Dummy(object):
+        def __init__(self):
+            pass
+
+    op = Dummy()
+    op.cdagger = rep.sparse_operators.c_dag
+    op.c = np.array([cdag.getH() for cdag in op.cdagger])
+    op.n = np.array([ cdag*cop for cop, cdag in zip(op.c, op.cdagger)])
     
     H_ref = -mu * (op.n[0] + op.n[1]) + \
         epsilon1 * (op.n[2] + op.n[3]) + \

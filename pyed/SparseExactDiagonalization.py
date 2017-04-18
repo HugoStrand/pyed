@@ -1,11 +1,9 @@
-# ----------------------------------------------------------------------
 
-""" General routines for exact diagonalization (ED)
+"""
+General routines for exact diagonalization using sparse matrices
 
-Single particle response functions in frequency and
-Two-particle Green's functions in imagnary time
-
-Author: Hugo U. R. Strand (2015), hugo.strand@gmail.com """
+Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
+"""
 
 # ----------------------------------------------------------------------
 
@@ -14,7 +12,7 @@ import itertools
 import numpy as np
 from scipy.linalg import expm
 
-#import scipy.sparse as sparse
+# ----------------------------------------------------------------------
 
 from scipy.sparse.linalg import eigs as eigs_sparse
 from scipy.sparse.linalg import eigsh as eigsh_sparse
@@ -24,10 +22,14 @@ from scipy.sparse.linalg import eigsh as eigsh_sparse
 from CubeTetras import CubeTetras
 
 # ----------------------------------------------------------------------
-class ExactDiagonalization(object):
+class SparseExactDiagonalization(object):
+
+    """ Exact diagonalization and one- and two- particle Green's 
+    function calculator. """
 
     # ------------------------------------------------------------------
-    def __init__(self, H, beta, nstates=None, hermitian=True,
+    def __init__(self, H, beta,
+                 nstates=None, hermitian=True,
                  v0=None, tol=0):
 
         self.v0 = v0
@@ -224,8 +226,8 @@ class ExactDiagonalization(object):
         ops = [O1, O2, O3, O4]
 
         Returns:
-        G^{(4)}(t) = < O1(t1) O2(t2) O3(t3) O4(0) > 
-
+        G^{(4)}(t) = -1/Z < O1(t1) O2(t2) O3(t3) O4(0) > 
+ 
         """
 
         assert( taus.shape[0] == 3 )
@@ -269,18 +271,8 @@ class ExactDiagonalization(object):
     def get_tau_greens_function_component(self, tau, op1, op2):
 
         r"""
-        G(t) = - < b(t) b^+(o) > 
-             = - 1/Z Tr[ e^{-\beta H} e^{t H} b e^{-t H} b^+]
-             = -1/Z \sum_n e^{-\beta E_n} \sum_m e^{-t(E_m-E_n)} <n|b|m><m|b^+|n>
-
-        with 
-        U_p(t) = \sum_n |n> e^{(t-\beta)E_n} <n|
-        U_m(t) = \sum_m |m> e^{-t E_m} <m|
-
-        this takes the form
-
-        G(t) = -1/Z Tr[ U_p(t) b U_m(t) b^+ ]
-
+        Returns:
+        G^{(2)}(\tau) = -1/Z < O_1(\tau) O_2(0) >
         """
 
         G = np.zeros((len(tau)), dtype=np.complex)
@@ -296,106 +288,13 @@ class ExactDiagonalization(object):
         return G
 
     # ------------------------------------------------------------------
-    def get_tau_greens_function(self, tau, op_vec):
-
-        r"""
-        G(t) = - < b(t) b^+(o) > 
-             = - 1/Z Tr[ e^{-\beta H} e^{t H} b e^{-t H} b^+]
-             = -1/Z \sum_n e^{-\beta E_n} \sum_m e^{-t(E_m-E_n)} <n|b|m><m|b^+|n>
-
-        with 
-        U_p(t) = \sum_n |n> e^{(t-\beta)E_n} <n|
-        U_m(t) = \sum_m |m> e^{-t E_m} <m|
-
-        this takes the form
-
-        G(t) = -1/Z Tr[ U_p(t) b U_m(t) b^+ ]
-
-        """
-
-        Nop = len(op_vec)
-        G = np.zeros((Nop, Nop, len(tau)), dtype=np.complex)
-
-        dop_vec = self._operators_to_eigenbasis(op_vec)
-        
-        et_p = np.exp((-self.beta + tau[:,None])*self.E[None,:])
-        et_m = np.exp(-tau[:,None]*self.E[None,:])
-        
-        for i1, i2 in itertools.product(range(Nop), repeat=2):
-            op1, op2 = dop_vec[i1], dop_vec[i2]
-            G[i1, i2] = -np.einsum(
-                'tn,tm,nm,mn->t', et_p, et_m, op1, np.mat(op2).H)
-
-        G /= self.Z        
-        return G
-
-    # ------------------------------------------------------------------
-    def get_frequency_greens_function(self, z, op_vec, xi,
-                                      verbose=False,
-                                      only_n_ne_m_contribs=False,
-                                      full_output=False):
-
-        r""" For i\omega_n - (E_m - E_n) != 0 we have:
-
-        G(i\omega_n) = 
-            Z^{-1} \sum_{nm} <n|b|m><m|b^+|n>/(z - (E_m-E_n)) 
-            * (e^{-beta E_n} - \xi e^{-\beta E_m})
-            = Z^{-1} \sum{nm} b_{nm} (b^+)_{mn}/(z - dE_{nm}) * M_{nm}
-
-        While for i\omega_0 - (E_n - E_n) == 0 we get the additional contrib
-
-        G(i\omega_0) += -Z^{-1} \sum_{n} <n|b|n><n|b^+|n> \beta e^{-\beta E_n}
-        """
-        
-        # -- Setup components of the Lehman expression
-        dE = - self.E[:, None] + self.E[None, :]
-        exp_bE = np.exp(-self.beta * self.E)
-        M = exp_bE[:, None] - xi * exp_bE[None, :]
-
-        inv_freq = z[:, None, None] - dE[None, :, :]
-        nonzero_idx = np.nonzero(inv_freq) # -- Only eval for non-zero values
-        freq = np.zeros_like(inv_freq)
-        freq[nonzero_idx] = inv_freq[nonzero_idx]**(-1)
-
-        # -- Trasform operators to eigen basis
-        dop_vec = []
-        for op in op_vec:
-            dop = np.mat(self.U).H * op.todense() * np.mat(self.U)
-            dop_vec.append(dop)
-
-        # -- Compute Lehman sum for all operator combinations
-        Nop = len(dop_vec)
-        G = np.zeros((Nop, Nop, len(z)), dtype=np.complex)
-        G0 = np.zeros((Nop, Nop), dtype=np.complex)
-        for i1, i2 in itertools.product(range(Nop), repeat=2):
-            op1, op2 = dop_vec[i1], dop_vec[i2]
-            G[i1, i2] = np.einsum('nm,mn,nm,znm->z',
-                                  op1, np.mat(op2).H, M, freq)
-            # -- Zero frequency and zero energy difference contribution
-            G0[i1, i2] = np.einsum('n,nn,nn->',
-                                   -self.beta * exp_bE, op1, np.mat(op2).H)
-
-        # -- Additional zero freq contrib
-        if not only_n_ne_m_contribs:
-            G[:, :, (z == 0.0)] += G0[:, :, None]
-        else:
-            #print '--> WARNING: Removing zero freq. contrib in ED'
-            pass
-
-        # -- Normalization by partition function
-        G /= self.Z
-
-        # -- Change axes from [2, 2, z] to [z, 2, 2]
-        G = np.rollaxis(G, -1)
-
-        if full_output:
-            return G, G0
-        else:
-            return G
-
-    # ------------------------------------------------------------------
     def get_frequency_greens_function_component(self, iwn, op1, op2, xi):
         
+        r"""
+        Returns:
+        G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
+        """
+
         # -- Components of the Lehman expression
         dE = - self.E[:, None] + self.E[None, :]
         exp_bE = np.exp(-self.beta * self.E)
@@ -420,29 +319,6 @@ class ExactDiagonalization(object):
     def get_high_frequency_tail_coeff_component(
             self, op1, op2, xi, Norder=3):
         
-        def xi_commutator(A, B, xi):
-            return A * B - xi * B * A
-            
-        def commutator(A, B):
-            return A * B - B * A
-
-        H = self.H
-        
-        Gc = np.zeros((Norder), dtype=np.complex)
-        ba, bc = op1, op2
-
-        Hba = ba
-        for order in xrange(Norder):
-            tail_op = xi_commutator(Hba, bc, xi)                
-            Gc[order] = (-1.)**(order) * \
-                        self.get_expectation_value(tail_op)
-            Hba = commutator(H, Hba)
-                
-        return Gc
-
-    # ------------------------------------------------------------------
-    def get_high_frequency_tail_coeff(self, op_vec, xi, Norder=3):
-
         r""" The high frequency tail corrections can be derived 
         directly from the imaginary time expression for the Green's function
         
@@ -470,36 +346,26 @@ class ExactDiagonalization(object):
             = (-1)^k < [ [[ H , b ]]^{(k-1)} , b^+ ]_{-\xi} >
 
         """
-        
+
         def xi_commutator(A, B, xi):
             return A * B - xi * B * A
             
         def commutator(A, B):
             return A * B - B * A
 
-        #def nth_order_leftside_commutator(A, B, order=1):
-        #    C = B
-        #    for idx in xrange:
-        #        C = commutator(A, C)
-        #    return C
-
         H = self.H
-        #Hba = nth_order_leftside_commutator(H, ba, n=1)
-        #coeff = xi_commutator(Hba, bc)
         
-        Nop = len(op_vec)
-        Gc = np.zeros((Norder, Nop, Nop), dtype=np.complex)
-        for i1, i2 in itertools.product(range(Nop), repeat=2):
-            ba, bc = op_vec[i1], op_vec[i2].getH()
+        Gc = np.zeros((Norder), dtype=np.complex)
+        ba, bc = op1, op2
 
-            Hba = ba
-            for order in xrange(Norder):
-                tail_op = xi_commutator(Hba, bc, xi)                
-                Gc[order, i1, i2] = (-1.)**(order) * \
-                                    self.get_expectation_value(tail_op)
-                Hba = commutator(H, Hba)
+        Hba = ba
+        for order in xrange(Norder):
+            tail_op = xi_commutator(Hba, bc, xi)                
+            Gc[order] = (-1.)**(order) * \
+                        self.get_expectation_value(tail_op)
+            Hba = commutator(H, Hba)
                 
-        return Gc        
+        return Gc      
 
     # ------------------------------------------------------------------
     def get_high_frequency_tail(self, iwn, Gc, start_order=-1):

@@ -1,5 +1,5 @@
-**PYED**: Simple exact diagonalization routines for finite quantum systems
-==========================================================================
+**PYED**: Exact diagonalization routines for finite quantum systems
+===================================================================
 
 Copyright (C) 2017, H. U.R. Strand
 

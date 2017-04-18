@@ -1,13 +1,16 @@
-""" Sparse matrix representation of fermionic creation
+
+"""
+Sparse matrix representation of fermionic creation
 and annihilation operators for a finite Fock space.
 
-Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com """
+Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
+"""
 
 # ----------------------------------------------------------------------
 
 import numpy as np
-from scipy import sparse
 
+from scipy import sparse
 
 # ----------------------------------------------------------------------
 class SparseMatrixRepresentation(object):
@@ -32,17 +35,28 @@ class SparseMatrixRepresentation(object):
                 self.operator_labels.append(label)
 
         # remove operator repetitions
-        # The set operator changes order!
         #self.operator_labels = list(set(self.operator_labels))
+        # The set operator changes order!
+
+        # Check for repeated operators
+        operator_labels_set = list(set(self.operator_labels))
+
+        assert len(operator_labels_set) == len(self.operator_labels), \
+            "ERROR: Repeated operators in fundamental_operators!"
+        
         self.operator_labels = [
             (dag, list(idx)) for dag, idx in self.operator_labels ]
 
         self.nfermions = len(self.operator_labels)
-        self.sparse_operators = CreationOperators(self.nfermions)
+        self.sparse_operators = \
+            SparseMatrixCreationOperators(self.nfermions)
 
     # ------------------------------------------------------------------
     def sparse_matrix(self, triqs_operator_expression):
 
+        """ Convert a general Triqs operator expression to a sparse
+        matrix representation. """
+        
         matrix_rep = 0.0 * self.sparse_operators.I
     
         for term, coef in triqs_operator_expression:
@@ -64,8 +78,11 @@ class SparseMatrixRepresentation(object):
         return matrix_rep
     
 # ----------------------------------------------------------------------
-class CreationOperators:
+class SparseMatrixCreationOperators:
 
+    """ Generator of sparse matrix representation of fermionic 
+    creation operators, for finite number of fermions. """
+    
     # ------------------------------------------------------------------
     def __init__(self, nfermions):
 

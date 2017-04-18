@@ -1,7 +1,10 @@
-#----------------------------------------------------------------------
 
-""" Solve a non-interacting three site problem and calculate
-its two-particle Green's function with both ED and Wicks theorem. """
+"""
+Solve a non-interacting three site problem and calculate
+its two-particle Green's function with both ED and Wicks theorem. 
+
+Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
+"""
 
 #----------------------------------------------------------------------
 
@@ -16,13 +19,12 @@ from pytriqs.operators import c, c_dag
 
 #----------------------------------------------------------------------
 
+from pyed.CubeTetras import zero_outer_planes_and_equal_times
 from pyed.TriqsExactDiagonalization import TriqsExactDiagonalization
 
-from pyed.CubeTetras import zero_outer_planes_and_equal_times
-
 #----------------------------------------------------------------------
-if __name__ == '__main__':
-    
+def test_two_particle_greens_function():
+
     # ------------------------------------------------------------------
     # -- Hubbard atom with two bath sites, Hamiltonian
     
@@ -83,4 +85,7 @@ if __name__ == '__main__':
     zero_outer_planes_and_equal_times(g40_tau)
     np.testing.assert_array_almost_equal(g4_tau.data, g40_tau.data)
     
-    
+#----------------------------------------------------------------------
+if __name__ == '__main__':
+
+    test_two_particle_greens_function()
