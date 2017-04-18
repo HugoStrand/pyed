@@ -32,7 +32,8 @@ class SparseMatrixRepresentation(object):
                 self.operator_labels.append(label)
 
         # remove operator repetitions
-        self.operator_labels = list(set(self.operator_labels))
+        # The set operator changes order!
+        #self.operator_labels = list(set(self.operator_labels))
         self.operator_labels = [
             (dag, list(idx)) for dag, idx in self.operator_labels ]
 
@@ -47,18 +48,19 @@ class SparseMatrixRepresentation(object):
         for term, coef in triqs_operator_expression:
 
             product = coef * self.sparse_operators.I
-
+            
             for fact in term:
 
                 dagger, idx = fact
                 oidx = self.operator_labels.index((False, idx))
-                
+
                 op = self.sparse_operators.c_dag[oidx]
                 if not dagger: op = op.getH()                
-                
-                product = np.dot(product, op)
-                matrix_rep = matrix_rep + product
 
+                product = product * op
+
+            matrix_rep = matrix_rep + product
+            
         return matrix_rep
     
 # ----------------------------------------------------------------------
