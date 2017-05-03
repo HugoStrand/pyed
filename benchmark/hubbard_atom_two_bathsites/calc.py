@@ -73,12 +73,12 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------
     # -- Two particle Green's functions
     
-    ntau = 50
+    ntau = 20
     imtime = MeshImTime(beta, 'Fermion', ntau)
     prodmesh = MeshProduct(imtime, imtime, imtime)
 
-    g40_tau = Gf(name='g40_tau', mesh=prodmesh, indices=[1])
-    g4_tau = Gf(name='g4_tau', mesh=prodmesh, indices=[1])
+    g40_tau = Gf(name='g40_tau', mesh=prodmesh, target_shape=[1, 1, 1, 1])
+    g4_tau = Gf(name='g4_tau', mesh=prodmesh, target_shape=[1, 1, 1, 1])
 
     ed.set_g40_tau(g40_tau, g_tau)
     ed.set_g4_tau(g4_tau, c(up,0), c_dag(up,0), c(up,0), c_dag(up,0))
