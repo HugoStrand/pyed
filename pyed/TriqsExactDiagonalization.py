@@ -35,6 +35,20 @@ class TriqsExactDiagonalization(object):
             self.rep.sparse_matrix(H), beta)
 
     # ------------------------------------------------------------------
+    def get_expectation_value(self, op):
+        return self.ed.get_expectation_value(self.rep.sparse_matrix(op))
+
+    # ------------------------------------------------------------------
+    def get_free_energy(self):
+        return self.ed.get_free_energy()
+    def get_partition_function(self):
+        return self.ed.get_partition_function()
+    def get_density_matrix(self):
+        return self.ed.get_density_matrix()
+    def get_ground_state_energy(self):
+        return self.ed.get_ground_state_energy()
+        
+    # ------------------------------------------------------------------
     def set_g2_tau(self, g_tau, op1, op2):
 
         assert( type(g_tau.mesh) == MeshImTime )

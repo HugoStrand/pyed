@@ -1,7 +1,7 @@
 
 """ 
-Helper routines for the equal time imaginary time cube and
-its sub tetrahedrons.
+Helper routines for the equal time imaginary time square and
+its sub triangles.
 
 Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
 """

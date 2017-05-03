@@ -43,6 +43,7 @@ class SparseExactDiagonalization(object):
 
         self._diagonalize_hamiltonian()
         self._calculate_partition_function()
+        self._calculate_density_matrix()
         
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
@@ -132,23 +133,23 @@ class SparseExactDiagonalization(object):
         return Omega
     
     # ------------------------------------------------------------------
-    def get_partition_function():
+    def get_partition_function(self):
         return self.Z
 
     # ------------------------------------------------------------------
-    def get_density_matrix():
+    def get_density_matrix(self):
         return self.rho
 
     # ------------------------------------------------------------------
-    def get_eigen_values():
+    def get_eigen_values(self):
         return self.E
 
     # ------------------------------------------------------------------
-    def get_eigen_vectors():
+    def get_eigen_vectors(self):
         return self.U
 
     # ------------------------------------------------------------------
-    def get_ground_state_energy():
+    def get_ground_state_energy(self):
         return self.E0
     
     # ------------------------------------------------------------------
