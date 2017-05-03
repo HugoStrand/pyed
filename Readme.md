@@ -1,4 +1,4 @@
-# **PYED**: Exact diagonalization routines for finite quantum systems
+# **PYED**: Exact diagonalization for finite quantum systems
 
 Copyright (C) 2017, H. U.R. Strand
 
@@ -18,7 +18,7 @@ There is currently no formal installation scripts packed with `pyed`. To use and
 export PYTHON_PATH=${HOME}/path/to/pyed:$PYTHON_PATH
 ```
 
-in your `.bashrc`, '.bash_profile`, or `.profile` file.
+in your `.bashrc`, `.bash_profile`, or `.profile` file.
 
 ## Documentation
 

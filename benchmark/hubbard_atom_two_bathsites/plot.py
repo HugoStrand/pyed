@@ -31,9 +31,11 @@ def hack_label_separation(ax, fontsize=6, pad=-2):
 def plot_2d_g(ax, g2_tau, **kwargs):
 
     data = g2_tau.data[:, :, 0, 0, 0, 0]
-    x = np.arange(data.shape[-1])
-    X, Y = np.meshgrid(x, x)
-    ax.plot_wireframe(X, Y, data.real, **kwargs)
+    tau = [tau.real for tau in g2_tau.mesh.components[0]]
+    #x = np.arange(data.shape[-1])
+    #X, Y = np.meshgrid(x, x)
+    t1, t2 = np.meshgrid(tau, tau)
+    ax.plot_wireframe(t1, t2, data.real, **kwargs)
     
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
