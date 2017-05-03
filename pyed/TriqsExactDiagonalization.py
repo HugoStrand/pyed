@@ -17,6 +17,7 @@ from pytriqs.gf import MeshImTime, MeshProduct
 # ----------------------------------------------------------------------
 
 from pyed.CubeTetras import CubeTetrasMesh, enumerate_tau3
+from pyed.SquareTriangles import SquareTrianglesMesh, enumerate_tau2
 from pyed.SparseExactDiagonalization import SparseExactDiagonalization
 from pyed.SparseMatrixFockStates import SparseMatrixRepresentation
 
@@ -85,10 +86,32 @@ class TriqsExactDiagonalization(object):
         else: raise NotImplementedError
 
     # ------------------------------------------------------------------
+    def set_g3_tau(self, g3_tau, op1, op2, op3):
+        
+        assert( g3_tau.target_shape == (1,1,1,1) )
+
+        op1_mat = self.rep.sparse_matrix(op1)
+        op2_mat = self.rep.sparse_matrix(op2)        
+        op3_mat = self.rep.sparse_matrix(op3)
+
+        ops_mat = np.array([op1_mat, op2_mat, op3_mat])
+
+        for idxs, taus, perm, perm_sign in SquareTrianglesMesh(g3_tau):
+
+            ops_perm_mat = ops_mat[perm + [2]]
+            taus_perm = np.array(taus).T[perm]
+
+            data = self.ed.get_timeordered_two_tau_greens_function(
+                taus_perm, ops_perm_mat)
+
+            for idx, d in zip(idxs, data):
+                g3_tau[list(idx)][:] = perm_sign * d
+
+    # ------------------------------------------------------------------
     def set_g40_tau(self, g40_tau, g_tau):
 
         assert( type(g_tau.mesh) == MeshImTime )
-        assert( g_tau.target_shape == g40_tau.target_shape )
+        #assert( g_tau.target_shape == g40_tau.target_shape )
 
         for (i1, i2, i3), (t1, t2, t3) in enumerate_tau3(g40_tau):
             g40_tau[[i1, i2, i3]][:] = \
@@ -97,7 +120,7 @@ class TriqsExactDiagonalization(object):
     # ------------------------------------------------------------------
     def set_g4_tau(self, g4_tau, op1, op2, op3, op4):
         
-        assert( g4_tau.target_shape == (1,1) )
+        assert( g4_tau.target_shape == (1,1,1,1) )
 
         op1_mat = self.rep.sparse_matrix(op1)
         op2_mat = self.rep.sparse_matrix(op2)        

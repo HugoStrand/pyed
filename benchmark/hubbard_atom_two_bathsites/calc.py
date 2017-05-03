@@ -84,6 +84,13 @@ if __name__ == '__main__':
     ed.set_g4_tau(g4_tau, c(up,0), c_dag(up,0), c(up,0), c_dag(up,0))
 
     # ------------------------------------------------------------------
+    # -- Two particle Green's functions (equal times)
+
+    prodmesh = MeshProduct(imtime, imtime)
+    g3pp_tau = Gf(name='g4_tau', mesh=prodmesh, target_shape=[1, 1, 1, 1])
+    ed.set_g3_tau(g3pp_tau, c(up,0), c_dag(up,0), c(up,0)*c_dag(up,0))
+
+    # ------------------------------------------------------------------
     # -- Store to hdf5
     
     with HDFArchive('data_ed.h5','w') as res:
@@ -94,4 +101,6 @@ if __name__ == '__main__':
         res["G20_tau"] = g40_tau
         res["G2_tau"] = g4_tau
 
+        res["G3pp_tau"] = g3pp_tau
+        
 # ----------------------------------------------------------------------

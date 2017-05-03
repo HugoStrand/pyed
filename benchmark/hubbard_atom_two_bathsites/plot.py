@@ -19,6 +19,15 @@ from pytriqs.archive import HDFArchive
 from pyed.CubeTetras import zero_outer_planes_and_equal_times
             
 # ----------------------------------------------------------------------
+def hack_label_separation(ax, fontsize=6, pad=-2):
+    for ticks in [ax.xaxis.get_major_ticks(),
+                  ax.yaxis.get_major_ticks(),
+                  ax.zaxis.get_major_ticks()]:
+        for tick in ticks:
+            tick.label.set_fontsize(fontsize)
+            tick.set_pad(pad)
+
+# ----------------------------------------------------------------------
 def plot_2d_g(ax, g2_tau, **kwargs):
 
     data = g2_tau.data[:, :, 0, 0, 0, 0]
@@ -46,6 +55,29 @@ if __name__ == '__main__':
     #oplot(g_tau)
     plt.savefig('figure_g_tau.pdf')
     
+    # ------------------------------------------------------------------
+    # -- Two-particle Green's function at equal times
+
+    g3pp_tau = A['G3pp_tau']
+
+    fig = plt.figure(figsize=(3.25, 3))
+    ax = fig.add_subplot(*[1, 1, 1], projection='3d')
+
+    plot_2d_g(ax, g3pp_tau,
+                  label=r'$G^{(3)}(\tau_1, \tau_2, \tau_3=0)$', alpha=0.5, color='g', lw=1.0, clip_on=False)
+
+    ax.set_xlabel(r'$\tau_1$', labelpad=-8)
+    ax.set_ylabel(r'$\tau_2$', labelpad=-8)
+    #ax.set_zlabel(r'$G(\tau_1, \tau_2, \tau_3)$', labelpad=-8)
+    ax.set_title(r'$G^{(4)}(\tau_1, \tau_2, 0^+)$', loc='left', fontdict=dict(fontsize=10))
+ 
+    #ax.set_zlim([-0.15, 0.15])
+    #ax.set_zlim([-0.09, 0.09])
+
+    hack_label_separation(ax, fontsize=6, pad=-2)
+    plt.tight_layout()
+    plt.savefig('figure_g3pp_tau.pdf')    
+
     # ------------------------------------------------------------------
     # -- Two-particle Green's function
     g4_tau = A['G2_tau']
@@ -87,17 +119,12 @@ if __name__ == '__main__':
         #ax.set_zlim([-0.15, 0.15])
         ax.set_zlim([-0.09, 0.09])
 
-        for ticks in [ax.xaxis.get_major_ticks(),
-                      ax.yaxis.get_major_ticks(),
-                      ax.zaxis.get_major_ticks()]:
-            for tick in ticks:
-                tick.label.set_fontsize(6)
-                tick.set_pad(-2)
-            
+        hack_label_separation(ax, fontsize=6, pad=-2)
+
     plt.legend(ncol=1, frameon=True, loc='best')
     plt.tight_layout()
     plt.savefig('figure_g2_tau.pdf')
 
-    plt.show()
+    #plt.show()
     
 # ----------------------------------------------------------------------

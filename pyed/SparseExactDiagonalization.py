@@ -219,6 +219,46 @@ class SparseExactDiagonalization(object):
         return G4
     
     # ------------------------------------------------------------------
+    def get_timeordered_two_tau_greens_function(self, taus, ops):
+
+        r"""
+        taus = [t1, t2] (ordered beta>t1>t2>0)
+        ops = [O1, O2, O3]
+
+        Returns:
+        G^{(4)}(t1, t2) = -1/Z < O1(t1) O2(t2) O3(0) > 
+ 
+        """
+
+        Nop = 3
+
+        assert( taus.shape[0] == 2 )
+        assert( len(ops) == Nop )
+
+        G = np.zeros((taus.shape[-1]), dtype=np.complex)
+
+        E = self.E[None, :]
+
+        t1, t2 = taus
+        t1, t2 = t1[:, None], t2[:, None]
+
+        assert( (t1 <= self.beta).all() )
+        assert( (t1 >= t2).all() )
+        assert( (t2 >= 0).all() )
+
+        et_a = np.exp((-self.beta + t1)*E)
+        et_b = np.exp((t2-t1)*E)
+        et_c = np.exp((-t2)*E)
+
+        dops = self._operators_to_eigenbasis(ops)
+        op1, op2, op3 = dops
+
+        G = np.einsum('ta,tb,tc,ab,bc,ca->t', et_a, et_b, et_c, op1, op2, op3)
+
+        G /= self.Z        
+        return G
+
+    # ------------------------------------------------------------------
     def get_timeordered_three_tau_greens_function(self, taus, ops):
 
         r"""
@@ -226,7 +266,7 @@ class SparseExactDiagonalization(object):
         ops = [O1, O2, O3, O4]
 
         Returns:
-        G^{(4)}(t) = -1/Z < O1(t1) O2(t2) O3(t3) O4(0) > 
+        G^{(4)}(t1, t2, t3) = -1/Z < O1(t1) O2(t2) O3(t3) O4(0) > 
  
         """
 
