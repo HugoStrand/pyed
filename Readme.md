@@ -2,9 +2,23 @@
 
 Copyright (C) 2017, H. U.R. Strand
 
+The python module `pyed` implements exact diagonalization for finite fermionic many-body quantum systems, together with calculations of several response functions in imagianary time.
+
+The many-body system is defined using `pytriqs` second-quantized operators and the response functions are stored in `pytriqs` Green's function containters.
+
+The original purpose of `pyed` is to provide exact solutions to small finite systems, to be used as benchmarks and tests for stochastic many-body solvers.
+
 ## Installation
 
-To do
+To do: Add `setup_utils` install script
+
+There is currently no formal installation scripts packed with `pyed`. To use and develop the module simply ammend your `PYTHON_PATH` with the `./pyed/` folder, e.g., add the follwing
+
+```
+export PYTHON_PATH=${HOME}/path/to/pyed:$PYTHON_PATH
+```
+
+in your `.bashrc`, '.bash_profile`, or `.profile` file.
 
 ## Documentation
 
