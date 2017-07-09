@@ -10,7 +10,7 @@ The original purpose of `pyed` is to provide exact solutions to small finite sys
 
 ## Dependencies
 
-`pyed` requires the `triqs` library to be installed from the `unstable` banch or version `1.5` scheduled for release late 2017.
+`pyed` requires [the `triqs` library](https://github.com/TRIQS/triqs) to be installed from the `unstable` banch or version `1.5` scheduled for release late 2017.
 
 ## Installation
 
