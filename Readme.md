@@ -27,6 +27,7 @@ in your `.bashrc`, `.bash_profile`, or `.profile` file.
 ## Documentation
 
 For documentation and usage examples please see the hands on [jupyter notebook](doc/Documentation.ipynb)
+
 For documentation and usage of CPT addition examples please see the hands on [jupyter notebook](doc/Documentation_CPT_2D.ipynb)
 
 ## License
