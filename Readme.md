@@ -1,4 +1,4 @@
-# **PYED**: Exact diagonalization for finite quantum systems
+# **PYED+CPT**: Exact diagonalization for finite quantum systems with cluster pertrubation theory
 
 Copyright (C) 2017, H. U.R. Strand, Ya.V. Zhumagulov
 
