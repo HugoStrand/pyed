@@ -1,8 +1,8 @@
-
 """
 General routines for exact diagonalization using sparse matrices
 
 Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
+        Yaroslav Zhumagulov (2017), yaroslav.zhumagulov@gmail.com
 """
 
 # ----------------------------------------------------------------------
@@ -16,81 +16,83 @@ from scipy.linalg import expm
 
 from scipy.sparse.linalg import eigs as eigs_sparse
 from scipy.sparse.linalg import eigsh as eigsh_sparse
-
+from scipy.sparse import vstack
+from scipy.sparse import csr_matrix
 # ----------------------------------------------------------------------
-
+import progressbar
 from CubeTetras import CubeTetras
 
 # ----------------------------------------------------------------------
 class SparseExactDiagonalization(object):
 
-    """ Exact diagonalization and one- and two- particle Green's 
+    """ Exact diagonalization and one- and two- particle Green's
     function calculator. """
 
     # ------------------------------------------------------------------
-    def __init__(self, H, beta,
-                 nstates=None, hermitian=True,
+    def __init__(self, H,blocks, beta,
+                 nstates, hermitian=True,
                  v0=None, tol=0):
 
         self.v0 = v0
         self.tol = tol
-        
-        self.nstates = nstates
+        self.nstates=nstates
         self.hermitian = hermitian
-        
         self.H = H
+        self.blocks=blocks
         self.beta = beta
-
         self._diagonalize_hamiltonian()
+        self._number_of_states_reduction()
         self._calculate_partition_function()
-        self._calculate_density_matrix()
-        
+        # self._calculate_density_matrix()
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
-       
+        self.full_U=csr_matrix(self.H.shape,dtype=np.float)
+        self.full_E=np.zeros(self.H.shape[0])
+        print 'Hamiltonian diagonalization:'
+        bar = progressbar.ProgressBar()
+        for i in bar(range(len(self.blocks))):
+            block=self.blocks[i]
+            X,Y=np.meshgrid(block,block)
+            E,U=np.linalg.eigh(self.H[X,Y].todense())
+            self.full_E[block]=E
+            self.full_U[Y,X]=U
+        self.full_E=np.array(self.full_E)
+        self.E0 = np.min(self.full_E)
+        self.full_E = self.full_E-self.E0
+    # ------------------------------------------------------------------
+    def _number_of_states_reduction(self):
         if self.nstates is None:
-            if self.hermitian:
-                self.E, self.U = np.linalg.eigh(self.H.todense())
-            else:
-                self.E, self.U = np.linalg.eig(self.H.todense())
+            self.E=self.full_E
+            self.U=self.full_U
         else:
-            if self.hermitian:
-                t = time.time()
-                self.E, self.U = eigsh_sparse(
-                    self.H, k=self.nstates, which='SA',
-                    v0=self.v0, tol=self.tol, ncv=self.nstates*8+1)
-                print 'ED:', time.time() - t, ' s'
-            else:
-                self.E, self.U = eigs_sparse(
-                    self.H, k=self.nstates, which='SR',
-                    v0=self.v0, tol=self.tol)
-            
-        self.U = np.mat(self.U)
-        self.E0 = np.min(self.E)
-        self.E = self.E - self.E0
+            indexes=np.argsort(self.full_E)[:self.nstates]
+            self.E=self.full_E[indexes]
+            self.U=self.full_U[:,indexes]
 
     # ------------------------------------------------------------------
     def _calculate_partition_function(self):
-
-        exp_bE = np.exp(-self.beta * self.E)
-        self.Z = np.sum(exp_bE)
+        self.Z = np.sum(np.exp(-self.beta*self.E))
 
     # ------------------------------------------------------------------
     def _calculate_density_matrix(self):
-
-        exp_bE = np.exp(-self.beta * self.E) / self.Z
-        self.rho = np.einsum('ij,j,jk->ik', self.U, exp_bE, self.U.H)
+        self.rho=csr_matrix(self.H.shape,dtype=np.float)
+        print 'Density matrix calculation:'
+        bar = progressbar.ProgressBar()
+        for i in bar(range(len(self.blocks))):
+            block=self.blocks[i]
+            X,Y=np.meshgrid(block,block)
+            exp_bE = np.exp(-self.beta * self.full_E[block]) / self.Z
+            self.rho[X,Y]= np.einsum('ij,j,jk->ik', self.full_U[X,Y].todense(), exp_bE, self.full_U[X,Y].H.todense())
 
     # ------------------------------------------------------------------
     def _operators_to_eigenbasis(self, op_vec):
 
         dop_vec = []
         for op in op_vec:
-            dop = np.mat(self.U).H * op.todense() * np.mat(self.U)
-            dop_vec.append(dop)
-
+            dop=self.U.getH()*op*self.U
+            dop_vec.append(dop.todense())
         return dop_vec
-        
+
     # ------------------------------------------------------------------
     def get_expectation_value_sparse(self, operator):
 
@@ -103,12 +105,13 @@ class SparseExactDiagonalization(object):
         exp_val /= self.Z
 
         return exp_val
-    
+
     # ------------------------------------------------------------------
     def get_expectation_value_dense(self, operator):
 
-        if not hasattr(self, 'rho'): self._calculate_density_matrix()            
-        return np.sum(np.diag(operator * self.rho))
+        if not hasattr(self, 'rho'): self._calculate_density_matrix()
+        return np.sum((operator * self.rho).diagonal())
+
 
     # ------------------------------------------------------------------
     def get_expectation_value(self, operator):
@@ -117,7 +120,7 @@ class SparseExactDiagonalization(object):
             return self.get_expectation_value_dense(operator)
         else:
             return self.get_expectation_value_sparse(operator)
-    
+
     # ------------------------------------------------------------------
     def get_free_energy(self):
 
@@ -128,10 +131,10 @@ class SparseExactDiagonalization(object):
 
         Z = e^{-\beta E_0} x \sum_n e^{-\beta (E_n - E_0)} = e^{-beta E_0} Z'
         \Omega = -1/\beta ( \ln Z' - \beta E_0 ) """
-        
+
         Omega = -1./self.beta * (np.log(self.Z) - self.beta * self.E0)
         return Omega
-    
+
     # ------------------------------------------------------------------
     def get_partition_function(self):
         return self.Z
@@ -151,13 +154,42 @@ class SparseExactDiagonalization(object):
     # ------------------------------------------------------------------
     def get_ground_state_energy(self):
         return self.E0
-    
+
+    def get_grand_potential(self):
+        return self.E0-np.log(np.sum(np.exp(-self.beta*self.E)))/self.beta
+
+    def get_real_frequency_greens_function_component(self, w, op1, op2,eta):
+        r"""
+        Returns:
+        G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
+        """
+
+        # -- Components of the Lehman expression
+        dE = - self.E[:, None] + self.E[None, :]
+        exp_bE = np.exp(-self.beta * self.E)
+        M = exp_bE[:, None] + exp_bE[None, :]
+
+        inv_freq = w[:, None, None] - dE[None, :, :] + 1j*eta
+        nonzero_idx = np.nonzero(inv_freq)
+        # -- Only eval for non-zero values
+        freq = np.zeros_like(inv_freq,dtype=np.complex128)
+        freq[nonzero_idx] = (inv_freq[nonzero_idx]) ** (-1)
+
+        op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
+
+        # -- Compute Lehman sum for all operator combinations
+        G = np.zeros((len(w)), dtype=np.complex)
+        G = np.einsum('nm,mn,nm,znm->z', op1_eig, op2_eig, M, freq)
+        G /= self.Z
+
+        return G
+
     # ------------------------------------------------------------------
     def get_g2_dissconnected_tau_tetra(self, tau, tau_g, g):
 
         g = np.squeeze(g) # fix for now throwing orb idx
         g = g.real
-        
+
         N = len(tau)
         G4 = np.zeros((N, N, N), dtype=np.complex)
 
@@ -181,7 +213,7 @@ class SparseExactDiagonalization(object):
 
         g = np.squeeze(g) # fix for now throwing orb idx
         g = g.real
-        
+
         N = len(tau)
         G4 = np.zeros((N, N, N), dtype=np.complex)
 
@@ -195,12 +227,12 @@ class SparseExactDiagonalization(object):
 
         t1, t2, t3 = np.meshgrid(tau, tau, tau, indexing='ij')
         G4 = gint(t1-t2)*gint(t3) - gint(t1)*gint(t3-t2)
-            
+
         return G4
-    
+
     # ------------------------------------------------------------------
     def get_g2_tau(self, tau, ops):
-        
+
         N = len(tau)
         G4 = np.zeros((N, N, N), dtype=np.complex)
         ops = np.array(ops)
@@ -209,16 +241,16 @@ class SparseExactDiagonalization(object):
             idx, taus, perm, perm_sign = tetra
 
             print 'Tetra:', tidx
-            
+
             # do not permute the last operator
             ops_perm = ops[perm + [3]]
             taus_perm = taus[perm] # permute the times
-            
+
             G4[idx] = self.get_timeordered_three_tau_greens_function(
                 taus_perm, ops_perm) * perm_sign
-            
+
         return G4
-    
+
     # ------------------------------------------------------------------
     def get_timeordered_two_tau_greens_function(self, taus, ops):
 
@@ -227,8 +259,8 @@ class SparseExactDiagonalization(object):
         ops = [O1, O2, O3]
 
         Returns:
-        G^{(4)}(t1, t2) = -1/Z < O1(t1) O2(t2) O3(0) > 
- 
+        G^{(4)}(t1, t2) = -1/Z < O1(t1) O2(t2) O3(0) >
+
         """
 
         Nop = 3
@@ -256,7 +288,7 @@ class SparseExactDiagonalization(object):
 
         G = np.einsum('ta,tb,tc,ab,bc,ca->t', et_a, et_b, et_c, op1, op2, op3)
 
-        G /= self.Z        
+        G /= self.Z
         return G
 
     # ------------------------------------------------------------------
@@ -267,8 +299,8 @@ class SparseExactDiagonalization(object):
         ops = [O1, O2, O3, O4]
 
         Returns:
-        G^{(4)}(t1, t2, t3) = -1/Z < O1(t1) O2(t2) O3(t3) O4(0) > 
- 
+        G^{(4)}(t1, t2, t3) = -1/Z < O1(t1) O2(t2) O3(t3) O4(0) >
+
         """
 
         assert( taus.shape[0] == 3 )
@@ -305,7 +337,7 @@ class SparseExactDiagonalization(object):
                 'ta,tb,tc,td,ab,bc,cd,da->t',
                 et_a, et_b, et_c, et_d, op1, op2, op3, op4)
 
-        G /= self.Z        
+        G /= self.Z
         return G
 
     # ------------------------------------------------------------------
@@ -319,18 +351,18 @@ class SparseExactDiagonalization(object):
         G = np.zeros((len(tau)), dtype=np.complex)
 
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
-        
+
         et_p = np.exp((-self.beta + tau[:,None])*self.E[None,:])
         et_m = np.exp(-tau[:,None]*self.E[None,:])
-        
+
         G = -np.einsum('tn,tm,nm,mn->t', et_p, et_m, op1_eig, op2_eig)
 
-        G /= self.Z        
+        G /= self.Z
         return G
 
     # ------------------------------------------------------------------
     def get_frequency_greens_function_component(self, iwn, op1, op2, xi):
-        
+
         r"""
         Returns:
         G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
@@ -354,18 +386,18 @@ class SparseExactDiagonalization(object):
         G = np.einsum('nm,mn,nm,znm->z', op1_eig, op2_eig, M, freq)
         G /= self.Z
 
-        return G        
-    
+        return G
+
     # ------------------------------------------------------------------
     def get_high_frequency_tail_coeff_component(
             self, op1, op2, xi, Norder=3):
-        
-        r""" The high frequency tail corrections can be derived 
+
+        r""" The high frequency tail corrections can be derived
         directly from the imaginary time expression for the Green's function
-        
+
         G(t) = -1/Z Tr[e^{-\beta H} e^{tH} b e^{-tH} b^+]
 
-        and the observation that the high frequency components of the 
+        and the observation that the high frequency components of the
         Matsubara Green's function G(i\omega_n) can be obtained by partial
         integration in
 
@@ -383,39 +415,39 @@ class SparseExactDiagonalization(object):
 
         Using this the high frequency coefficients c_k takes the form
 
-        c_k = (-1)^(k-1) (\xi G^{(k-1)}(\beta^-) - G^{(k-1)}(0^+)) 
+        c_k = (-1)^(k-1) (\xi G^{(k-1)}(\beta^-) - G^{(k-1)}(0^+))
             = (-1)^k < [ [[ H , b ]]^{(k-1)} , b^+ ]_{-\xi} >
 
         """
 
         def xi_commutator(A, B, xi):
             return A * B - xi * B * A
-            
+
         def commutator(A, B):
             return A * B - B * A
 
         H = self.H
-        
+
         Gc = np.zeros((Norder), dtype=np.complex)
         ba, bc = op1, op2
 
         Hba = ba
         for order in xrange(Norder):
-            tail_op = xi_commutator(Hba, bc, xi)                
+            tail_op = xi_commutator(Hba, bc, xi)
             Gc[order] = (-1.)**(order) * \
                         self.get_expectation_value(tail_op)
             Hba = commutator(H, Hba)
-                
-        return Gc      
+
+        return Gc
 
     # ------------------------------------------------------------------
     def get_high_frequency_tail(self, iwn, Gc, start_order=-1):
 
-        """ from the high frequency coefficients Gc calculate the 
+        """ from the high frequency coefficients Gc calculate the
         Matsubara Green's function tail
 
         G(i\omega_n) = \sum_k Gc[k] / (i\omega_n)^k """
-        
+
         Nop = Gc.shape[-1]
         Nw = len(iwn)
         G = np.zeros((Nw, Nop, Nop), dtype=np.complex)
@@ -424,7 +456,7 @@ class SparseExactDiagonalization(object):
             G[iwn_idx, :, :] += \
                 iwn[iwn_idx, None, None]**(-idx+start_order) * gc[None, :, :]
 
-        return G            
+        return G
 
     # ------------------------------------------------------------------
 
