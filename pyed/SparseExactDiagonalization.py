@@ -9,18 +9,24 @@ Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
 
 import time
 import itertools
+import progressbar
 import numpy as np
-from scipy.linalg import expm
-
+import multiprocessing
+from joblib import Parallel, delayed
 # ----------------------------------------------------------------------
 
+import scipy.sparse as sparse
 from scipy.sparse.linalg import eigs as eigs_sparse
 from scipy.sparse.linalg import eigsh as eigsh_sparse
 from scipy.sparse import vstack
 from scipy.sparse import csr_matrix
+from scipy.linalg import expm
 # ----------------------------------------------------------------------
-import progressbar
 from CubeTetras import CubeTetras
+# ----------------------------------------------------------------------
+
+def gf(M,E,x):
+    return np.sum(M/(x-E))
 
 # ----------------------------------------------------------------------
 class SparseExactDiagonalization(object):
@@ -46,29 +52,25 @@ class SparseExactDiagonalization(object):
         # self._calculate_density_matrix()
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
-        self.full_U=csr_matrix(self.H.shape,dtype=np.float)
-        self.full_E=np.zeros(self.H.shape[0])
+        self.U=csr_matrix(self.H.shape,dtype=np.float)
+        self.E=np.zeros(self.H.shape[0])
         print 'Hamiltonian diagonalization:'
         bar = progressbar.ProgressBar()
         for i in bar(range(len(self.blocks))):
             block=self.blocks[i]
             X,Y=np.meshgrid(block,block)
             E,U=np.linalg.eigh(self.H[X,Y].todense())
-            self.full_E[block]=E
-            self.full_U[Y,X]=U
-        self.full_E=np.array(self.full_E)
-        self.E0 = np.min(self.full_E)
-        self.full_E = self.full_E-self.E0
-    # ------------------------------------------------------------------
+            self.E[block]=E
+            self.U[Y,X]=U
+        self.E=np.array(self.E)
+        self.E0 = np.min(self.E)
+        self.E = self.E-self.E0
+     # ------------------------------------------------------------------
     def _number_of_states_reduction(self):
-        if self.nstates is None:
-            self.E=self.full_E
-            self.U=self.full_U
-        else:
-            indexes=np.argsort(self.full_E)[:self.nstates]
-            self.E=self.full_E[indexes]
-            self.U=self.full_U[:,indexes]
-
+        if self.nstates is not None:
+            indexes=np.argsort(self.E)[:self.nstates]
+            self.E=self.E[indexes]
+            self.U=self.U[:,indexes]
     # ------------------------------------------------------------------
     def _calculate_partition_function(self):
         self.Z = np.sum(np.exp(-self.beta*self.E))
@@ -76,13 +78,9 @@ class SparseExactDiagonalization(object):
     # ------------------------------------------------------------------
     def _calculate_density_matrix(self):
         self.rho=csr_matrix(self.H.shape,dtype=np.float)
-        print 'Density matrix calculation:'
-        bar = progressbar.ProgressBar()
-        for i in bar(range(len(self.blocks))):
-            block=self.blocks[i]
-            X,Y=np.meshgrid(block,block)
-            exp_bE = np.exp(-self.beta * self.full_E[block]) / self.Z
-            self.rho[X,Y]= np.einsum('ij,j,jk->ik', self.full_U[X,Y].todense(), exp_bE, self.full_U[X,Y].H.todense())
+        exp_bE=csr_matrix(self.H.shape,dtype=np.float)
+        exp_bE[range(self.E.size),range(self.E.size)]=np.exp(-self.beta * self.E) / self.Z
+        self.rho=self.U.getH()*exp_bE*self.U
 
     # ------------------------------------------------------------------
     def _operators_to_eigenbasis(self, op_vec):
@@ -90,36 +88,15 @@ class SparseExactDiagonalization(object):
         dop_vec = []
         for op in op_vec:
             dop=self.U.getH()*op*self.U
-            dop_vec.append(dop.todense())
+            dop_vec.append(dop)
         return dop_vec
-
-    # ------------------------------------------------------------------
-    def get_expectation_value_sparse(self, operator):
-
-        exp_val = 0.0
-        for idx in xrange(self.E.size):
-            vec = self.U[:, idx]
-            dot_prod = np.dot(vec.H, operator * vec)[0,0] # <n|O|n>
-            exp_val += np.exp(-self.beta * self.E[idx]) * dot_prod
-
-        exp_val /= self.Z
-
-        return exp_val
-
-    # ------------------------------------------------------------------
-    def get_expectation_value_dense(self, operator):
-
-        if not hasattr(self, 'rho'): self._calculate_density_matrix()
-        return np.sum((operator * self.rho).diagonal())
-
 
     # ------------------------------------------------------------------
     def get_expectation_value(self, operator):
 
-        if self.nstates is None:
-            return self.get_expectation_value_dense(operator)
-        else:
-            return self.get_expectation_value_sparse(operator)
+        if not hasattr(self, 'rho'): self._calculate_density_matrix()
+        return np.sum((operator * self.rho).diagonal())
+
 
     # ------------------------------------------------------------------
     def get_free_energy(self):
@@ -158,205 +135,17 @@ class SparseExactDiagonalization(object):
     def get_grand_potential(self):
         return self.E0-np.log(np.sum(np.exp(-self.beta*self.E)))/self.beta
 
-    def get_real_frequency_greens_function_component(self, w, op1, op2,eta):
+    def get_real_frequency_greens_function_component(self, w, op1, op2,eta,xi):
         r"""
         Returns:
         G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
         """
-
-        # -- Components of the Lehman expression
-        dE = - self.E[:, None] + self.E[None, :]
-        exp_bE = np.exp(-self.beta * self.E)
-        M = exp_bE[:, None] + exp_bE[None, :]
-
-        inv_freq = w[:, None, None] - dE[None, :, :] + 1j*eta
-        nonzero_idx = np.nonzero(inv_freq)
-        # -- Only eval for non-zero values
-        freq = np.zeros_like(inv_freq,dtype=np.complex128)
-        freq[nonzero_idx] = (inv_freq[nonzero_idx]) ** (-1)
-
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
-
-        # -- Compute Lehman sum for all operator combinations
+        Q=(op1_eig.getH().multiply(op2_eig)).tocoo()
+        M=(np.exp(-self.beta*self.E[Q.row])-xi*np.exp(-self.beta*self.E[Q.col]))*Q.data
+        E=(self.E[Q.row]-self.E[Q.col])
         G = np.zeros((len(w)), dtype=np.complex)
-        G = np.einsum('nm,mn,nm,znm->z', op1_eig, op2_eig, M, freq)
-        G /= self.Z
-
-        return G
-
-    # ------------------------------------------------------------------
-    def get_g2_dissconnected_tau_tetra(self, tau, tau_g, g):
-
-        g = np.squeeze(g) # fix for now throwing orb idx
-        g = g.real
-
-        N = len(tau)
-        G4 = np.zeros((N, N, N), dtype=np.complex)
-
-        def gint(t):
-            sign = 1.0
-            if (t < 0).any():
-                assert( (t <= 0).all() )
-                t = self.beta + t
-                sign = -1.0
-
-            return sign * np.interp(t, tau_g, g)
-
-        for idx, taus, perm, perm_sign in CubeTetras(tau):
-            t1, t2, t3 = taus
-            G4[idx] = gint(t1-t2)*gint(t3) - gint(t1)*gint(t3-t2)
-
-        return G4
-
-    # ------------------------------------------------------------------
-    def get_g2_dissconnected_tau(self, tau, tau_g, g):
-
-        g = np.squeeze(g) # fix for now throwing orb idx
-        g = g.real
-
-        N = len(tau)
-        G4 = np.zeros((N, N, N), dtype=np.complex)
-
-        def gint(t_in):
-            t = np.copy(t_in)
-            sidx = (t < 0)
-            sign = np.ones_like(t)
-            sign[sidx] *= -1.
-            t[sidx] = self.beta + t[sidx]
-            return sign * np.interp(t, tau_g, g)
-
-        t1, t2, t3 = np.meshgrid(tau, tau, tau, indexing='ij')
-        G4 = gint(t1-t2)*gint(t3) - gint(t1)*gint(t3-t2)
-
-        return G4
-
-    # ------------------------------------------------------------------
-    def get_g2_tau(self, tau, ops):
-
-        N = len(tau)
-        G4 = np.zeros((N, N, N), dtype=np.complex)
-        ops = np.array(ops)
-
-        for tidx, tetra in enumerate(CubeTetras(tau)):
-            idx, taus, perm, perm_sign = tetra
-
-            print 'Tetra:', tidx
-
-            # do not permute the last operator
-            ops_perm = ops[perm + [3]]
-            taus_perm = taus[perm] # permute the times
-
-            G4[idx] = self.get_timeordered_three_tau_greens_function(
-                taus_perm, ops_perm) * perm_sign
-
-        return G4
-
-    # ------------------------------------------------------------------
-    def get_timeordered_two_tau_greens_function(self, taus, ops):
-
-        r"""
-        taus = [t1, t2] (ordered beta>t1>t2>0)
-        ops = [O1, O2, O3]
-
-        Returns:
-        G^{(4)}(t1, t2) = -1/Z < O1(t1) O2(t2) O3(0) >
-
-        """
-
-        Nop = 3
-
-        assert( taus.shape[0] == 2 )
-        assert( len(ops) == Nop )
-
-        G = np.zeros((taus.shape[-1]), dtype=np.complex)
-
-        E = self.E[None, :]
-
-        t1, t2 = taus
-        t1, t2 = t1[:, None], t2[:, None]
-
-        assert( (t1 <= self.beta).all() )
-        assert( (t1 >= t2).all() )
-        assert( (t2 >= 0).all() )
-
-        et_a = np.exp((-self.beta + t1)*E)
-        et_b = np.exp((t2-t1)*E)
-        et_c = np.exp((-t2)*E)
-
-        dops = self._operators_to_eigenbasis(ops)
-        op1, op2, op3 = dops
-
-        G = np.einsum('ta,tb,tc,ab,bc,ca->t', et_a, et_b, et_c, op1, op2, op3)
-
-        G /= self.Z
-        return G
-
-    # ------------------------------------------------------------------
-    def get_timeordered_three_tau_greens_function(self, taus, ops):
-
-        r"""
-        taus = [t1, t2, t3] (ordered beta>t1>t2>t3>0)
-        ops = [O1, O2, O3, O4]
-
-        Returns:
-        G^{(4)}(t1, t2, t3) = -1/Z < O1(t1) O2(t2) O3(t3) O4(0) >
-
-        """
-
-        assert( taus.shape[0] == 3 )
-        assert( len(ops) == 4 )
-
-        Nop = 4
-        G = np.zeros((taus.shape[-1]), dtype=np.complex)
-
-        E = self.E[None, :]
-
-        t1, t2, t3 = taus
-        t1, t2, t3 = t1[:, None], t2[:, None], t3[:, None]
-
-        assert( (t1 <= self.beta).all() )
-        assert( (t1 >= t2).all() )
-        assert( (t2 >= t3).all() )
-        assert( (t3 >= 0).all() )
-
-        et_a = np.exp((-self.beta + t1)*E)
-        et_b = np.exp((t2-t1)*E)
-        et_c = np.exp((t3-t2)*E)
-        et_d = np.exp((-t3)*E)
-
-        dops = self._operators_to_eigenbasis(ops)
-        op1, op2, op3, op4 = dops
-
-        if True:
-            q_tac = np.einsum('tb,ab,bc->tac', et_b, op1, op2)
-            q_tca = np.einsum('td,cd,da->tca', et_d, op3, op4)
-            G = np.einsum('ta,tc,tac,tca->t', et_a, et_c, q_tac, q_tca)
-        else:
-            # Not efficient...
-            G = np.einsum(
-                'ta,tb,tc,td,ab,bc,cd,da->t',
-                et_a, et_b, et_c, et_d, op1, op2, op3, op4)
-
-        G /= self.Z
-        return G
-
-    # ------------------------------------------------------------------
-    def get_tau_greens_function_component(self, tau, op1, op2):
-
-        r"""
-        Returns:
-        G^{(2)}(\tau) = -1/Z < O_1(\tau) O_2(0) >
-        """
-
-        G = np.zeros((len(tau)), dtype=np.complex)
-
-        op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
-
-        et_p = np.exp((-self.beta + tau[:,None])*self.E[None,:])
-        et_m = np.exp(-tau[:,None]*self.E[None,:])
-
-        G = -np.einsum('tn,tm,nm,mn->t', et_p, et_m, op1_eig, op2_eig)
-
+        G = Parallel(n_jobs=4)(delayed(gf)(M,E-1j*eta,x) for x in w)
         G /= self.Z
         return G
 
@@ -368,22 +157,12 @@ class SparseExactDiagonalization(object):
         G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
         """
 
-        # -- Components of the Lehman expression
-        dE = - self.E[:, None] + self.E[None, :]
-        exp_bE = np.exp(-self.beta * self.E)
-        M = exp_bE[:, None] - xi * exp_bE[None, :]
-
-        inv_freq = iwn[:, None, None] - dE[None, :, :]
-        nonzero_idx = np.nonzero(inv_freq)
-        # -- Only eval for non-zero values
-        freq = np.zeros_like(inv_freq)
-        freq[nonzero_idx] = inv_freq[nonzero_idx]**(-1)
-
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
-
-        # -- Compute Lehman sum for all operator combinations
+        Q=(op1_eig.getH().multiply(op2_eig)).tocoo()
+        M=(np.exp(-self.beta*self.E[Q.row])-xi*np.exp(-self.beta*self.E[Q.col]))*Q.data
+        E=(self.E[Q.row]-self.E[Q.col])
         G = np.zeros((len(iwn)), dtype=np.complex)
-        G = np.einsum('nm,mn,nm,znm->z', op1_eig, op2_eig, M, freq)
+        G = Parallel(n_jobs=4)(delayed(gf)(M,E,x) for x in iwn)
         G /= self.Z
 
         return G

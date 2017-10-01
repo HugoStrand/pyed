@@ -91,9 +91,9 @@ class ClusterPertrubationTheory_1D(object):
 # ------------------------------------------------------------------
     def __init__(self,ed,k_mesh,V,omega,shape):
         self.ed=ed
-        self.kx,self.ky=k_mesh
+        self.k=k_mesh
         self.V=V
-        self.N=self.V.shape[0];self.L=self.V.shape[2]
+        self.N=self.V.shape[0];self.L=self.V.shape[1]
         self.omega=omega
         self.shape=shape
         self._get_green_of_the_system()
@@ -117,19 +117,19 @@ class ClusterPertrubationTheory_1D(object):
         print "Coupling system"
         bar = progressbar.ProgressBar()
         for k in bar(range(len(index_combinations))):
-            i,j=index_combinations[l]
+            i,j=index_combinations[k]
             self.G_Q[i,:,:,j]=np.dot(self.G_I[:,:,j],np.linalg.inv(np.eye(self.L)-np.dot(self.V[i],self.G_I[:,:,j])))
 # ------------------------------------------------------------------
     def _reduce_mix_representation(self):
         self.G=np.zeros((self.N,self.omega.size),dtype=np.complex)
-        index_combinations=[(i,a,b) for i,j,a,b in product(range(self.N),range(self.L),range(self.L))]
+        index_combinations=[(i,a,b) for i,a,b in product(range(self.N),range(self.L),range(self.L))]
         print "Reduce mixed representation"
         bar = progressbar.ProgressBar()
         for k in bar(range(len(index_combinations))):
             i,a,b=index_combinations[k]
-            self.G[i]+=np.exp(-1j*k[i,j]*(a-b))*self.G_Q[i,a,b]
+            self.G[i]+=np.exp(-1j*self.k[i]*(a-b))*self.G_Q[i,a,b]
 # ------------------------------------------------------------------
     def calculation_bandstructure(self):
         bandstructure=[]
-        for i in self.range(L): bandstructure.append(-self.G[i].imag/np.pi)
+        for i in range(self.N): bandstructure.append(-self.G[i].imag/np.pi)
         self.bandstructure=np.array(bandstructure).T
