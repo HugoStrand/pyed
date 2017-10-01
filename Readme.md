@@ -1,4 +1,4 @@
-# **PYED+CPT**: Exact diagonalization for finite quantum systems with cluster pertrubation theory
+# **PYED**: Exact diagonalization for finite quantum systems
 
 Copyright (C) 2017, H. U.R. Strand, Ya.V. Zhumagulov
 
@@ -8,7 +8,7 @@ The many-body system is defined using `pytriqs` second-quantized operators and t
 
 The original purpose of `pyed` is to provide exact solutions to small finite systems, to be used as benchmarks and tests for stochastic many-body solvers.
 
-Cluster pertrubation theory [1] addition to pyed allow calculate bandstructure and Fermi surface of several models. 
+Cluster pertrubation theory [1] addition to pyed allow calculate bandstructure and Fermi surface of several models.
 
 [1]  https://www.physique.usherbrooke.ca/pages/sites/default/files/senechal/publis/Senechal2011vn.pdf
 
