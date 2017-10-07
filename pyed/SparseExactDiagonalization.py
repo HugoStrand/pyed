@@ -25,8 +25,13 @@ from scipy.linalg import expm
 from CubeTetras import CubeTetras
 # ----------------------------------------------------------------------
 
+<<<<<<< Updated upstream
 def gf(M,E,x):
     return np.sum(M/(x-E))
+=======
+def gf(M,E,eta,x):
+    return np.sum(M/(x+1j*eta-E))
+>>>>>>> Stashed changes
 
 # ----------------------------------------------------------------------
 class SparseExactDiagonalization(object):
@@ -49,7 +54,7 @@ class SparseExactDiagonalization(object):
         self._diagonalize_hamiltonian()
         self._number_of_states_reduction()
         self._calculate_partition_function()
-        # self._calculate_density_matrix()
+        self._calculate_density_matrix()
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
         self.U=csr_matrix(self.H.shape,dtype=np.float)
@@ -58,10 +63,17 @@ class SparseExactDiagonalization(object):
         bar = progressbar.ProgressBar()
         for i in bar(range(len(self.blocks))):
             block=self.blocks[i]
+<<<<<<< Updated upstream
             X,Y=np.meshgrid(block,block)
             E,U=np.linalg.eigh(self.H[X,Y].todense())
             self.E[block]=E
             self.U[Y,X]=U
+=======
+            E,U=np.linalg.eigh(self.H[block][:,block].todense())
+            self.E[block]=E
+            for i,n in enumerate(block):
+                self.U[n,block]=U[i]
+>>>>>>> Stashed changes
         self.E=np.array(self.E)
         self.E0 = np.min(self.E)
         self.E = self.E-self.E0
@@ -78,9 +90,19 @@ class SparseExactDiagonalization(object):
     # ------------------------------------------------------------------
     def _calculate_density_matrix(self):
         self.rho=csr_matrix(self.H.shape,dtype=np.float)
+<<<<<<< Updated upstream
         exp_bE=csr_matrix(self.H.shape,dtype=np.float)
         exp_bE[range(self.E.size),range(self.E.size)]=np.exp(-self.beta * self.E) / self.Z
         self.rho=self.U.getH()*exp_bE*self.U
+=======
+        print 'Density matrix calculation:'
+        bar = progressbar.ProgressBar()
+        for i in bar(range(len(self.blocks))):
+            block=self.blocks[i]
+            X,Y=np.meshgrid(block,block)
+            exp_bE = np.exp(-self.beta * self.E[block]) / self.Z
+            self.rho[X,Y]= np.einsum('ij,j,jk->ik', self.U[X,Y].todense(), exp_bE, self.U[X,Y].H.todense())
+>>>>>>> Stashed changes
 
     # ------------------------------------------------------------------
     def _operators_to_eigenbasis(self, op_vec):
@@ -142,10 +164,193 @@ class SparseExactDiagonalization(object):
         """
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
         Q=(op1_eig.getH().multiply(op2_eig)).tocoo()
+<<<<<<< Updated upstream
         M=(np.exp(-self.beta*self.E[Q.row])-xi*np.exp(-self.beta*self.E[Q.col]))*Q.data
         E=(self.E[Q.row]-self.E[Q.col])
         G = np.zeros((len(w)), dtype=np.complex)
         G = Parallel(n_jobs=4)(delayed(gf)(M,E-1j*eta,x) for x in w)
+=======
+        M=(np.exp(-self.beta*self.E[Q.row])+np.exp(-self.beta*self.E[Q.col]))*Q.data
+        E=(self.E[Q.row]-self.E[Q.col])
+        G = np.zeros((len(w)), dtype=np.complex)
+        G = Parallel(n_jobs=12)(delayed(gf)(M,E,eta,x) for x in w)
+        G /= self.Z
+        return G
+
+    # ------------------------------------------------------------------
+    def get_g2_dissconnected_tau_tetra(self, tau, tau_g, g):
+
+        g = np.squeeze(g) # fix for now throwing orb idx
+        g = g.real
+
+        N = len(tau)
+        G4 = np.zeros((N, N, N), dtype=np.complex)
+
+        def gint(t):
+            sign = 1.0
+            if (t < 0).any():
+                assert( (t <= 0).all() )
+                t = self.beta + t
+                sign = -1.0
+
+            return sign * np.interp(t, tau_g, g)
+
+        for idx, taus, perm, perm_sign in CubeTetras(tau):
+            t1, t2, t3 = taus
+            G4[idx] = gint(t1-t2)*gint(t3) - gint(t1)*gint(t3-t2)
+
+        return G4
+
+    # ------------------------------------------------------------------
+    def get_g2_dissconnected_tau(self, tau, tau_g, g):
+
+        g = np.squeeze(g) # fix for now throwing orb idx
+        g = g.real
+
+        N = len(tau)
+        G4 = np.zeros((N, N, N), dtype=np.complex)
+
+        def gint(t_in):
+            t = np.copy(t_in)
+            sidx = (t < 0)
+            sign = np.ones_like(t)
+            sign[sidx] *= -1.
+            t[sidx] = self.beta + t[sidx]
+            return sign * np.interp(t, tau_g, g)
+
+        t1, t2, t3 = np.meshgrid(tau, tau, tau, indexing='ij')
+        G4 = gint(t1-t2)*gint(t3) - gint(t1)*gint(t3-t2)
+
+        return G4
+
+    # ------------------------------------------------------------------
+    def get_g2_tau(self, tau, ops):
+
+        N = len(tau)
+        G4 = np.zeros((N, N, N), dtype=np.complex)
+        ops = np.array(ops)
+
+        for tidx, tetra in enumerate(CubeTetras(tau)):
+            idx, taus, perm, perm_sign = tetra
+
+            print 'Tetra:', tidx
+
+            # do not permute the last operator
+            ops_perm = ops[perm + [3]]
+            taus_perm = taus[perm] # permute the times
+
+            G4[idx] = self.get_timeordered_three_tau_greens_function(
+                taus_perm, ops_perm) * perm_sign
+
+        return G4
+
+    # ------------------------------------------------------------------
+    def get_timeordered_two_tau_greens_function(self, taus, ops):
+
+        r"""
+        taus = [t1, t2] (ordered beta>t1>t2>0)
+        ops = [O1, O2, O3]
+
+        Returns:
+        G^{(4)}(t1, t2) = -1/Z < O1(t1) O2(t2) O3(0) >
+
+        """
+
+        Nop = 3
+
+        assert( taus.shape[0] == 2 )
+        assert( len(ops) == Nop )
+
+        G = np.zeros((taus.shape[-1]), dtype=np.complex)
+
+        E = self.E[None, :]
+
+        t1, t2 = taus
+        t1, t2 = t1[:, None], t2[:, None]
+
+        assert( (t1 <= self.beta).all() )
+        assert( (t1 >= t2).all() )
+        assert( (t2 >= 0).all() )
+
+        et_a = np.exp((-self.beta + t1)*E)
+        et_b = np.exp((t2-t1)*E)
+        et_c = np.exp((-t2)*E)
+
+        dops = self._operators_to_eigenbasis(ops)
+        op1, op2, op3 = dops
+
+        G = np.einsum('ta,tb,tc,ab,bc,ca->t', et_a, et_b, et_c, op1, op2, op3)
+
+        G /= self.Z
+        return G
+
+    # ------------------------------------------------------------------
+    def get_timeordered_three_tau_greens_function(self, taus, ops):
+
+        r"""
+        taus = [t1, t2, t3] (ordered beta>t1>t2>t3>0)
+        ops = [O1, O2, O3, O4]
+
+        Returns:
+        G^{(4)}(t1, t2, t3) = -1/Z < O1(t1) O2(t2) O3(t3) O4(0) >
+
+        """
+
+        assert( taus.shape[0] == 3 )
+        assert( len(ops) == 4 )
+
+        Nop = 4
+        G = np.zeros((taus.shape[-1]), dtype=np.complex)
+
+        E = self.E[None, :]
+
+        t1, t2, t3 = taus
+        t1, t2, t3 = t1[:, None], t2[:, None], t3[:, None]
+
+        assert( (t1 <= self.beta).all() )
+        assert( (t1 >= t2).all() )
+        assert( (t2 >= t3).all() )
+        assert( (t3 >= 0).all() )
+
+        et_a = np.exp((-self.beta + t1)*E)
+        et_b = np.exp((t2-t1)*E)
+        et_c = np.exp((t3-t2)*E)
+        et_d = np.exp((-t3)*E)
+
+        dops = self._operators_to_eigenbasis(ops)
+        op1, op2, op3, op4 = dops
+
+        if True:
+            q_tac = np.einsum('tb,ab,bc->tac', et_b, op1, op2)
+            q_tca = np.einsum('td,cd,da->tca', et_d, op3, op4)
+            G = np.einsum('ta,tc,tac,tca->t', et_a, et_c, q_tac, q_tca)
+        else:
+            # Not efficient...
+            G = np.einsum(
+                'ta,tb,tc,td,ab,bc,cd,da->t',
+                et_a, et_b, et_c, et_d, op1, op2, op3, op4)
+
+        G /= self.Z
+        return G
+
+    # ------------------------------------------------------------------
+    def get_tau_greens_function_component(self, tau, op1, op2):
+
+        r"""
+        Returns:
+        G^{(2)}(\tau) = -1/Z < O_1(\tau) O_2(0) >
+        """
+
+        G = np.zeros((len(tau)), dtype=np.complex)
+
+        op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
+
+        et_p = np.exp((-self.beta + tau[:,None])*self.E[None,:])
+        et_m = np.exp(-tau[:,None]*self.E[None,:])
+
+        G = -np.einsum('tn,tm,nm,mn->t', et_p, et_m, op1_eig, op2_eig)
+
+>>>>>>> Stashed changes
         G /= self.Z
         return G
 
