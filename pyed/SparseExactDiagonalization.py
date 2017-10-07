@@ -25,13 +25,8 @@ from scipy.linalg import expm
 from CubeTetras import CubeTetras
 # ----------------------------------------------------------------------
 
-<<<<<<< Updated upstream
-def gf(M,E,x):
-    return np.sum(M/(x-E))
-=======
 def gf(M,E,eta,x):
     return np.sum(M/(x+1j*eta-E))
->>>>>>> Stashed changes
 
 # ----------------------------------------------------------------------
 class SparseExactDiagonalization(object):
@@ -63,17 +58,10 @@ class SparseExactDiagonalization(object):
         bar = progressbar.ProgressBar()
         for i in bar(range(len(self.blocks))):
             block=self.blocks[i]
-<<<<<<< Updated upstream
-            X,Y=np.meshgrid(block,block)
-            E,U=np.linalg.eigh(self.H[X,Y].todense())
-            self.E[block]=E
-            self.U[Y,X]=U
-=======
             E,U=np.linalg.eigh(self.H[block][:,block].todense())
             self.E[block]=E
             for i,n in enumerate(block):
                 self.U[n,block]=U[i]
->>>>>>> Stashed changes
         self.E=np.array(self.E)
         self.E0 = np.min(self.E)
         self.E = self.E-self.E0
@@ -90,11 +78,6 @@ class SparseExactDiagonalization(object):
     # ------------------------------------------------------------------
     def _calculate_density_matrix(self):
         self.rho=csr_matrix(self.H.shape,dtype=np.float)
-<<<<<<< Updated upstream
-        exp_bE=csr_matrix(self.H.shape,dtype=np.float)
-        exp_bE[range(self.E.size),range(self.E.size)]=np.exp(-self.beta * self.E) / self.Z
-        self.rho=self.U.getH()*exp_bE*self.U
-=======
         print 'Density matrix calculation:'
         bar = progressbar.ProgressBar()
         for i in bar(range(len(self.blocks))):
@@ -102,7 +85,6 @@ class SparseExactDiagonalization(object):
             X,Y=np.meshgrid(block,block)
             exp_bE = np.exp(-self.beta * self.E[block]) / self.Z
             self.rho[X,Y]= np.einsum('ij,j,jk->ik', self.U[X,Y].todense(), exp_bE, self.U[X,Y].H.todense())
->>>>>>> Stashed changes
 
     # ------------------------------------------------------------------
     def _operators_to_eigenbasis(self, op_vec):
@@ -114,11 +96,32 @@ class SparseExactDiagonalization(object):
         return dop_vec
 
     # ------------------------------------------------------------------
-    def get_expectation_value(self, operator):
+    def get_expectation_value_sparse(self, operator):
+
+        exp_val = 0.0
+        for idx in xrange(self.E.size):
+            vec = self.U[:, idx]
+            dot_prod = np.dot(vec.H, operator * vec)[0,0] # <n|O|n>
+            exp_val += np.exp(-self.beta * self.E[idx]) * dot_prod
+
+        exp_val /= self.Z
+
+        return exp_val
+
+    # ------------------------------------------------------------------
+    def get_expectation_value_dense(self, operator):
 
         if not hasattr(self, 'rho'): self._calculate_density_matrix()
         return np.sum((operator * self.rho).diagonal())
 
+
+    # ------------------------------------------------------------------
+    def get_expectation_value(self, operator):
+
+        if self.nstates is None:
+            return self.get_expectation_value_dense(operator)
+        else:
+            return self.get_expectation_value_sparse(operator)
 
     # ------------------------------------------------------------------
     def get_free_energy(self):
@@ -157,19 +160,13 @@ class SparseExactDiagonalization(object):
     def get_grand_potential(self):
         return self.E0-np.log(np.sum(np.exp(-self.beta*self.E)))/self.beta
 
-    def get_real_frequency_greens_function_component(self, w, op1, op2,eta,xi):
+    def get_real_frequency_greens_function_component(self, w, op1, op2,eta):
         r"""
         Returns:
         G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
         """
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
         Q=(op1_eig.getH().multiply(op2_eig)).tocoo()
-<<<<<<< Updated upstream
-        M=(np.exp(-self.beta*self.E[Q.row])-xi*np.exp(-self.beta*self.E[Q.col]))*Q.data
-        E=(self.E[Q.row]-self.E[Q.col])
-        G = np.zeros((len(w)), dtype=np.complex)
-        G = Parallel(n_jobs=4)(delayed(gf)(M,E-1j*eta,x) for x in w)
-=======
         M=(np.exp(-self.beta*self.E[Q.row])+np.exp(-self.beta*self.E[Q.col]))*Q.data
         E=(self.E[Q.row]-self.E[Q.col])
         G = np.zeros((len(w)), dtype=np.complex)
@@ -350,7 +347,6 @@ class SparseExactDiagonalization(object):
 
         G = -np.einsum('tn,tm,nm,mn->t', et_p, et_m, op1_eig, op2_eig)
 
->>>>>>> Stashed changes
         G /= self.Z
         return G
 
@@ -362,12 +358,22 @@ class SparseExactDiagonalization(object):
         G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
         """
 
+        # -- Components of the Lehman expression
+        dE = - self.E[:, None] + self.E[None, :]
+        exp_bE = np.exp(-self.beta * self.E)
+        M = exp_bE[:, None] - xi * exp_bE[None, :]
+
+        inv_freq = iwn[:, None, None] - dE[None, :, :]
+        nonzero_idx = np.nonzero(inv_freq)
+        # -- Only eval for non-zero values
+        freq = np.zeros_like(inv_freq)
+        freq[nonzero_idx] = inv_freq[nonzero_idx]**(-1)
+
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
-        Q=(op1_eig.getH().multiply(op2_eig)).tocoo()
-        M=(np.exp(-self.beta*self.E[Q.row])-xi*np.exp(-self.beta*self.E[Q.col]))*Q.data
-        E=(self.E[Q.row]-self.E[Q.col])
+
+        # -- Compute Lehman sum for all operator combinations
         G = np.zeros((len(iwn)), dtype=np.complex)
-        G = Parallel(n_jobs=4)(delayed(gf)(M,E,x) for x in iwn)
+        G = np.einsum('nm,mn,nm,znm->z', op1_eig, op2_eig, M, freq)
         G /= self.Z
 
         return G
