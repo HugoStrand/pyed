@@ -310,7 +310,8 @@ class SparseExactDiagonalization(object):
         op=(op1_eig.getH().multiply(op2_eig)).tocoo()
         M=(np.exp(-self.beta*self.E[op.row])+np.exp(-self.beta*self.E[op.col]))*op.data
         E=(self.E[op.row]-self.E[op.col])
-        for i in range(len(iwn)):
+	bar = progressbar.ProgressBar()
+        for i in bar(range(len(iwn))):
             G[i]=np.sum(M/(iwn[i]-E))
         G /= self.Z
 
