@@ -56,10 +56,10 @@ class SparseExactDiagonalization(object):
         bar = progressbar.ProgressBar()
         for i in bar(range(len(self.blocks))):
             block=self.blocks[i]
-            E,U=np.linalg.eigh(self.H[block][:,block].todense())
+	    X,Y=np.meshgrid(block,block)
+            E,U=np.linalg.eigh(self.H[X,Y].todense())
             self.E[block]=E
-            for i,n in enumerate(block):
-                self.U[n,block]=U[i]
+            self.U[Y,X]=U
         self.E=np.array(self.E)
         self.E0 = np.min(self.E)
         self.E = self.E-self.E0
@@ -310,7 +310,7 @@ class SparseExactDiagonalization(object):
         op=(op1_eig.getH().multiply(op2_eig)).tocoo()
         M=(np.exp(-self.beta*self.E[op.row])+np.exp(-self.beta*self.E[op.col]))*op.data
         E=(self.E[op.row]-self.E[op.col])
-	bar = progressbar.ProgressBar()
+        bar = progressbar.ProgressBar()
         for i in bar(range(len(iwn))):
             G[i]=np.sum(M/(iwn[i]-E))
         G /= self.Z
