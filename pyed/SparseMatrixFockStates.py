@@ -51,7 +51,7 @@ class SparseMatrixRepresentation(object):
         self.nfermions = len(self.operator_labels)
         self.sparse_operators = \
             SparseMatrixCreationOperators(self.nfermions)
-        self.indexes_blocks=self.sparse_operators.indexes_blocks
+        self.blocks=self.sparse_operators.blocks
     # ------------------------------------------------------------------
     def sparse_matrix(self, triqs_operator_expression):
 
@@ -109,11 +109,11 @@ class SparseMatrixCreationOperators:
         self.permutation=np.zeros(self.nstates)
         self.permutation[np.concatenate(indexes_const,axis=0)]=np.arange(self.nstates)
         self.permutation=np.array(self.permutation,dtype=np.int)
-        self.indexes_blocks=[]
+        self.blocks=[]
         for n_up in range(self.nfermions/2+1):
             for n_down in range(self.nfermions/2+1):
                 indexes=np.where((np.sum(states_up,axis=1)==n_up)&(np.sum(states_down,axis=1)==n_down))[0].flatten()
-                self.indexes_blocks.append(self.permutation[indexes])
+                self.blocks.append(self.permutation[indexes])
 
 
         self.c_dag = []
