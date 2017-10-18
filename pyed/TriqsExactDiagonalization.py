@@ -156,5 +156,15 @@ class TriqsExactDiagonalization(object):
                 g4_tau[list(idx)][:] = perm_sign * d
 
     # ------------------------------------------------------------------
+    def set_g2_w(self, g_w, op1, op2,eta=0.05):
+
+        assert( g_w.target_shape == (1, 1) )
+
+        op1_mat = self.rep.sparse_matrix(op1)
+        op2_mat = self.rep.sparse_matrix(op2)
+
+        w = np.array([w for w in g_w.mesh])
+
+        g_w.data[:, 0, 0] = self.ed.get_real_frequency_greens_function_component(w, op1_mat, op2_mat,eta)
 
 # ----------------------------------------------------------------------
