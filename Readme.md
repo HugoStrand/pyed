@@ -1,6 +1,6 @@
 # **PYED**: Exact diagonalization for finite quantum systems
 
-Copyright (C) 2017, H. U.R. Strand
+Copyright (C) 2017, H. U.R. Strand, Ya.V. Zhumagulov
 
 The python module `pyed` implements exact diagonalization for finite fermionic many-body quantum systems, together with calculations of several response functions in imagianary time.
 
@@ -8,9 +8,6 @@ The many-body system is defined using `pytriqs` second-quantized operators and t
 
 The original purpose of `pyed` is to provide exact solutions to small finite systems, to be used as benchmarks and tests for stochastic many-body solvers.
 
-## Dependencies
-
-`pyed` requires [the `triqs` library](https://github.com/TRIQS/triqs) to be installed from the `unstable` banch or version `1.5` scheduled for release late 2017.
 
 ## Installation
 

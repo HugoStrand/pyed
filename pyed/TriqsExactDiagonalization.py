@@ -1,5 +1,5 @@
 
-""" 
+"""
 Exact diagonalization and single- and two-particle Green's function calculator for Triqs operator expressions.
 
 Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
@@ -23,7 +23,7 @@ from pyed.SparseMatrixFockStates import SparseMatrixRepresentation
 
 # ----------------------------------------------------------------------
 class TriqsExactDiagonalization(object):
-    
+
     """ Exact diagonalization for Triqs operator expressions. """
 
     # ------------------------------------------------------------------
@@ -32,7 +32,7 @@ class TriqsExactDiagonalization(object):
         self.beta = beta
         self.rep = SparseMatrixRepresentation(fundamental_operators)
         self.ed = SparseExactDiagonalization(
-            self.rep.sparse_matrix(H), beta)
+            self.rep.sparse_matrix(H),self.rep.blocks, beta)
 
     # ------------------------------------------------------------------
     def get_expectation_value(self, op):
@@ -47,36 +47,36 @@ class TriqsExactDiagonalization(object):
         return self.ed.get_density_matrix()
     def get_ground_state_energy(self):
         return self.ed.get_ground_state_energy()
-        
+
     # ------------------------------------------------------------------
     def set_g2_tau(self, g_tau, op1, op2):
 
         assert( type(g_tau.mesh) == MeshImTime )
         assert( self.beta == g_tau.mesh.beta )
         assert( g_tau.target_shape == (1, 1) )
-    
+
         op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
+        op2_mat = self.rep.sparse_matrix(op2)
 
         tau = np.array([tau for tau in g_tau.mesh])
- 
+
         g_tau.data[:, 0, 0] = \
             self.ed.get_tau_greens_function_component(
                 tau, op1_mat, op2_mat)
 
         self.set_tail(g_tau, op1_mat, op2_mat)
-        
+
     # ------------------------------------------------------------------
     def set_g2_iwn(self, g_iwn, op1, op2):
 
         assert( self.beta == g_iwn.mesh.beta )
         assert( g_iwn.target_shape == (1, 1) )
-    
+
         op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
+        op2_mat = self.rep.sparse_matrix(op2)
 
         iwn = np.array([iwn for iwn in g_iwn.mesh])
-        
+
         g_iwn.data[:, 0, 0] = \
             self.ed.get_frequency_greens_function_component(
                 iwn, op1_mat, op2_mat, self.xi(g_iwn.mesh))
@@ -102,11 +102,11 @@ class TriqsExactDiagonalization(object):
 
     # ------------------------------------------------------------------
     def set_g3_tau(self, g3_tau, op1, op2, op3):
-        
+
         assert( g3_tau.target_shape == (1,1,1,1) )
 
         op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
+        op2_mat = self.rep.sparse_matrix(op2)
         op3_mat = self.rep.sparse_matrix(op3)
 
         ops_mat = np.array([op1_mat, op2_mat, op3_mat])
@@ -131,16 +131,16 @@ class TriqsExactDiagonalization(object):
         for (i1, i2, i3), (t1, t2, t3) in enumerate_tau3(g40_tau):
             g40_tau[[i1, i2, i3]][:] = \
                 g_tau(t1-t2)*g_tau(t3) - g_tau(t1)*g_tau(t3-t2)
-    
+
     # ------------------------------------------------------------------
     def set_g4_tau(self, g4_tau, op1, op2, op3, op4):
-        
+
         assert( g4_tau.target_shape == (1,1,1,1) )
 
         op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
+        op2_mat = self.rep.sparse_matrix(op2)
         op3_mat = self.rep.sparse_matrix(op3)
-        op4_mat = self.rep.sparse_matrix(op4)        
+        op4_mat = self.rep.sparse_matrix(op4)
 
         ops_mat = np.array([op1_mat, op2_mat, op3_mat, op4_mat])
 
@@ -156,5 +156,15 @@ class TriqsExactDiagonalization(object):
                 g4_tau[list(idx)][:] = perm_sign * d
 
     # ------------------------------------------------------------------
-   
+    def set_g2_w(self, g_w, op1, op2,eta=0.05):
+
+        assert( g_w.target_shape == (1, 1) )
+
+        op1_mat = self.rep.sparse_matrix(op1)
+        op2_mat = self.rep.sparse_matrix(op2)
+
+        w = np.array([w for w in g_w.mesh])
+
+        g_w.data[:, 0, 0] = self.ed.get_real_frequency_greens_function_component(w, op1_mat, op2_mat,eta)
+
 # ----------------------------------------------------------------------
