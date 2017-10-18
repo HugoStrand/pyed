@@ -46,7 +46,7 @@ class SparseExactDiagonalization(object):
 
         self._diagonalize_hamiltonian()
         self._calculate_partition_function()
-        self._calculate_density_matrix()
+        #self._calculate_density_matrix()
 
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
@@ -60,6 +60,7 @@ class SparseExactDiagonalization(object):
             E,U=np.linalg.eigh(self.H[X,Y].todense())
             self.E[block]=E
             self.U[Y,X]=U
+	    del X,Y
         self.E=np.array(self.E)
         self.E0 = np.min(self.E)
         self.E = self.E-self.E0
@@ -88,16 +89,8 @@ class SparseExactDiagonalization(object):
 
     # ------------------------------------------------------------------
     def get_expectation_value(self, operator):
-
-        exp_val = 0.0
-        for idx in xrange(self.E.size):
-            vec = self.U[:, idx]
-            dot_prod = np.dot(vec.H, operator * vec)[0,0] # <n|O|n>
-            exp_val += np.exp(-self.beta * self.E[idx]) * dot_prod
-
-        exp_val /= self.Z
-
-        return exp_val
+        op=self._operators_to_eigenbasis([operator])[0]
+        return (op.diagonal()*np.exp(-self.beta * self.E)).sum()/self.Z
     # ------------------------------------------------------------------
     def get_free_energy(self):
 
@@ -387,5 +380,26 @@ class SparseExactDiagonalization(object):
 
         return G
 
+     # ------------------------------------------------------------------
+    def get_real_frequency_greens_function_component(self, w, op1, op2, eta):
+
+        r"""
+        Returns:
+        G^{(2)}(i\omega_n) = -1/Z < O_1(i\omega_n) O_2(-i\omega_n) >
+        """
+
+        op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
+
+        # -- Compute Lehman sum for all operator combinations
+        G = np.zeros((len(w)), dtype=np.complex)
+        op=(op1_eig.getH().multiply(op2_eig)).tocoo()
+        M=(np.exp(-self.beta*self.E[op.row])+np.exp(-self.beta*self.E[op.col]))*op.data
+        E=(self.E[op.row]-self.E[op.col])
+        bar = progressbar.ProgressBar()
+        for i in bar(range(len(w))):
+            G[i]=np.sum(M/(w[i]+1j*eta-E))
+        G /= self.Z
+
+        return G
 
 # ----------------------------------------------------------------------
