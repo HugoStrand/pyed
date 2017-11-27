@@ -61,11 +61,11 @@ if __name__ == '__main__':
 
     g_tau = GfImTime(name=r'$g$', beta=beta,
                      statistic='Fermion', n_points=50,
-                     indices=[1])
+                     target_shape=(1,1))
 
     g_iwn = GfImFreq(name='$g$', beta=beta,
                      statistic='Fermion', n_points=10,
-                     indices=[1])
+                     target_shape=(1,1))
     
     ed.set_g2_tau(g_tau, c(up,0), c_dag(up,0))
     ed.set_g2_iwn(g_iwn, c(up,0), c_dag(up,0))
