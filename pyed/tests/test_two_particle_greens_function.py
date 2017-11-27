@@ -61,7 +61,7 @@ def test_two_particle_greens_function():
 
     g_tau = GfImTime(name=r'$g$', beta=beta,
                      statistic='Fermion', n_points=100,
-                     indices=[1])
+                     target_shape=(1,1))
     
     ed.set_g2_tau(g_tau, c(up,0), c_dag(up,0))
     
@@ -72,8 +72,8 @@ def test_two_particle_greens_function():
     imtime = MeshImTime(beta, 'Fermion', ntau)
     prodmesh = MeshProduct(imtime, imtime, imtime)
 
-    g40_tau = Gf(name='g40_tau', mesh=prodmesh, indices=[1])
-    g4_tau = Gf(name='g4_tau', mesh=prodmesh, indices=[1])
+    g40_tau = Gf(name='g40_tau', mesh=prodmesh, target_shape=(1,1,1,1))
+    g4_tau = Gf(name='g4_tau', mesh=prodmesh, target_shape=(1,1,1,1))
 
     ed.set_g40_tau(g40_tau, g_tau)
     ed.set_g4_tau(g4_tau, c(up,0), c_dag(up,0), c(up,0), c_dag(up,0))

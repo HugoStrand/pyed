@@ -31,7 +31,7 @@ def hack_label_separation(ax, fontsize=6, pad=-2):
 def plot_2d_g(ax, g2_tau, **kwargs):
 
     data = g2_tau.data[:, :, 0, 0, 0, 0]
-    tau = [tau.real for tau in g2_tau.mesh.components[0]]
+    tau = [tau.value.real for tau in g2_tau.mesh.components[0]]
     #x = np.arange(data.shape[-1])
     #X, Y = np.meshgrid(x, x)
     t1, t2 = np.meshgrid(tau, tau)
@@ -46,10 +46,10 @@ if __name__ == '__main__':
     # -- Single-particle Green's function
     
     g_tau = A['G_tau']
-    tau = np.array([tau for tau in g_tau.mesh])
+    tau = np.array([tau.value for tau in g_tau.mesh])
 
     plt.figure(figsize=(3.25, 2))
-    tau = [ tau for tau in g_tau.mesh ]
+    tau = [ tau.value for tau in g_tau.mesh ]
     plt.plot(tau, g_tau.data[:, 0, 0], '.-g', alpha=0.5)
     plt.xlabel(r'$\tau$')
     plt.ylabel(r'$G(\tau)$')

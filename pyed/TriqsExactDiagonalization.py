@@ -58,7 +58,7 @@ class TriqsExactDiagonalization(object):
         op1_mat = self.rep.sparse_matrix(op1)
         op2_mat = self.rep.sparse_matrix(op2)        
 
-        tau = np.array([tau for tau in g_tau.mesh])
+        tau = np.array([tau.value for tau in g_tau.mesh])
  
         g_tau.data[:, 0, 0] = \
             self.ed.get_tau_greens_function_component(
@@ -75,7 +75,7 @@ class TriqsExactDiagonalization(object):
         op1_mat = self.rep.sparse_matrix(op1)
         op2_mat = self.rep.sparse_matrix(op2)        
 
-        iwn = np.array([iwn for iwn in g_iwn.mesh])
+        iwn = np.array([iwn.value for iwn in g_iwn.mesh])
         
         g_iwn.data[:, 0, 0] = \
             self.ed.get_frequency_greens_function_component(
@@ -128,9 +128,9 @@ class TriqsExactDiagonalization(object):
         assert( type(g_tau.mesh) == MeshImTime )
         #assert( g_tau.target_shape == g40_tau.target_shape )
 
-        for (i1, i2, i3), (t1, t2, t3) in enumerate_tau3(g40_tau):
-            g40_tau[[i1, i2, i3]][:] = \
-                g_tau(t1-t2)*g_tau(t3) - g_tau(t1)*g_tau(t3-t2)
+        for t1, t2, t3 in g40_tau.mesh:
+            g40_tau[t1, t2, t3][:] = \
+                g_tau(t1-t2)*g_tau(t3.value) - g_tau(t1.value)*g_tau(t3-t2)
     
     # ------------------------------------------------------------------
     def set_g4_tau(self, g4_tau, op1, op2, op3, op4):
