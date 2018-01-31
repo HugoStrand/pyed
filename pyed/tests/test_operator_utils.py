@@ -13,6 +13,11 @@ import numpy as np
 
 from pytriqs.operators import n, c, c_dag, Operator, dagger
 
+from pytriqs.operators.util.U_matrix import U_matrix_kanamori, U_matrix
+from pytriqs.operators.util.hamiltonians import h_int_kanamori
+
+from transform_kanamori import h_int_kanamori_transformed
+
 # ----------------------------------------------------------------------
 
 from pyed.OperatorUtils import op_is_fundamental, op_serialize_fundamental
@@ -47,6 +52,60 @@ def test_quadratic():
     h_loc_ref = quadratic_matrix_from_operator(H_loc, fund_op)
     
     np.testing.assert_array_almost_equal(h_loc, h_loc_ref)
+
+# ----------------------------------------------------------------------
+def test_quartic(verbose=False):
+
+    if verbose:
+        print '--> test_quartic'
+        
+    num_orbitals = 2
+    num_spins = 2
+
+    U, J = 1.0, 0.2
+
+    up, do = 0, 1
+    spin_names = [up, do]
+    orb_names = range(num_orbitals)
+    
+    U_ab, UPrime_ab = U_matrix_kanamori(n_orb=2, U_int=U, J_hund=J)
+
+    if verbose:
+        print 'U_ab =\n', U_ab
+        print 'UPrime_ab =\n', UPrime_ab
+
+    T_ab = np.array([
+        [1., 1.],
+        [1., -1.],
+        ]) / np.sqrt(2.)
+
+    # -- Check hermitian
+    np.testing.assert_array_almost_equal(np.mat(T_ab) * np.mat(T_ab).H, np.eye(2))
+    
+    I = np.eye(num_spins)
+    T_ab_spin = np.kron(T_ab, I)
+    
+    H_int = h_int_kanamori(
+        spin_names, orb_names, U_ab, UPrime_ab, J_hund=J,
+        off_diag=True, map_operator_structure=None, H_dump=None)
+
+    op_imp = [c(up,0), c(do,0), c(up,1), c(do,1)]
+    Ht_int = operator_single_particle_transform(H_int, T_ab_spin, op_imp)
+
+    if verbose:
+        print 'H_int =', H_int
+        print 'Ht_int =', Ht_int
+
+    from transform_kanamori import h_int_kanamori_transformed
+
+    Ht_int_ref = h_int_kanamori_transformed(
+        [T_ab, T_ab], spin_names, orb_names, U_ab, UPrime_ab, J_hund=J,
+        off_diag=True, map_operator_structure=None, H_dump=None)
+
+    if verbose:
+        print 'Ht_int_ref =', Ht_int_ref
+    
+    assert( (Ht_int_ref - Ht_int).is_zero() )
 
 # ----------------------------------------------------------------------
 def test_single_particle_transform(verbose=False):
@@ -102,4 +161,5 @@ if __name__ == '__main__':
 
     test_fundamental()
     test_quadratic()
+    test_quartic(verbose=True)
     test_single_particle_transform(verbose=True)
