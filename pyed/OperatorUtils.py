@@ -134,7 +134,11 @@ def operator_single_particle_transform(op, U, fundamental_operators):
         for factor in term:
             if type(factor) is list:
                 for dag, idxs in factor:
-                    op_factor *= op_trans_dict[(dag, tuple(idxs))]
+                    tup = (dag, tuple(idxs))
+                    if tup in op_trans_dict.keys():
+                        op_factor *= op_trans_dict[tup]
+                    else:
+                        op_factor *= {False:c, True:c_dag}[dag](*idxs)
                     
             else: # constant prefactor
                 op_factor *= factor

@@ -1,6 +1,8 @@
 # ----------------------------------------------------------------------
 
-""" Kanamori interaction with transformed single particle basis. """
+""" Kanamori interaction with transformed single particle basis. 
+
+Author: Gernot J. Kraberger (2016) """
 
 # ----------------------------------------------------------------------
 
