@@ -50,8 +50,8 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
     G_tau_ed = GfImTime(beta=beta, statistic='Fermion', n_points=ntau, target_shape=(1,1))
     G_iw_ed = GfImFreq(beta=beta, statistic='Fermion', n_points=niw, target_shape=(1,1))
 
-    ed.set_g2_tau(G_tau_ed, c(0,0), c_dag(0,0))
-    ed.set_g2_iwn(G_iw_ed, c(0,0), c_dag(0,0))
+    ed.set_g2_tau(G_tau_ed[0, 0], c(0,0), c_dag(0,0))
+    ed.set_g2_iwn(G_iw_ed[0, 0], c(0,0), c_dag(0,0))
 
     # ------------------------------------------------------------------
     # -- Compare gfs

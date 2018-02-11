@@ -12,11 +12,12 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from pytriqs.gf import MeshImTime, MeshProduct
+from pytriqs.gf import MeshImTime, MeshProduct, Idx
+from pytriqs.operators import dagger
 
 # ----------------------------------------------------------------------
 
-from pyed.CubeTetras import CubeTetrasMesh, enumerate_tau3
+from pyed.CubeTetras import CubeTetrasMesh, enumerate_tau3, Idxs
 from pyed.SquareTriangles import SquareTrianglesMesh, enumerate_tau2
 from pyed.SparseExactDiagonalization import SparseExactDiagonalization
 from pyed.SparseMatrixFockStates import SparseMatrixRepresentation
@@ -53,36 +54,54 @@ class TriqsExactDiagonalization(object):
 
         assert( type(g_tau.mesh) == MeshImTime )
         assert( self.beta == g_tau.mesh.beta )
-        assert( g_tau.target_shape == (1, 1) )
+        assert( g_tau.target_shape == () )
     
         op1_mat = self.rep.sparse_matrix(op1)
         op2_mat = self.rep.sparse_matrix(op2)        
 
         tau = np.array([tau.value for tau in g_tau.mesh])
  
-        g_tau.data[:, 0, 0] = \
-            self.ed.get_tau_greens_function_component(
+        g_tau.data[:] = self.ed.get_tau_greens_function_component(
                 tau, op1_mat, op2_mat)
 
         self.set_tail(g_tau, op1_mat, op2_mat)
         
     # ------------------------------------------------------------------
+    def set_g2_tau_matrix(self, g_tau, op_list):
+
+        assert( g_tau.target_shape == tuple([len(op_list)]*2) )
+
+        for (i1, o1), (i2, o2) in itertools.product(enumerate(op_list), repeat=2):
+            self.set_g2_tau(g_tau[i1, i2], o1, dagger(o2))
+
+        return g_tau
+
+    # ------------------------------------------------------------------
     def set_g2_iwn(self, g_iwn, op1, op2):
 
         assert( self.beta == g_iwn.mesh.beta )
-        assert( g_iwn.target_shape == (1, 1) )
+        assert( g_iwn.target_shape == () )
     
         op1_mat = self.rep.sparse_matrix(op1)
         op2_mat = self.rep.sparse_matrix(op2)        
 
         iwn = np.array([iwn.value for iwn in g_iwn.mesh])
         
-        g_iwn.data[:, 0, 0] = \
-            self.ed.get_frequency_greens_function_component(
+        g_iwn.data[:] = self.ed.get_frequency_greens_function_component(
                 iwn, op1_mat, op2_mat, self.xi(g_iwn.mesh))
 
         self.set_tail(g_iwn, op1_mat, op2_mat)
 
+    # ------------------------------------------------------------------
+    def set_g2_iwn_matrix(self, g_iwn, op_list):
+
+        assert( g_iwn.target_shape == tuple([len(op_list)]*2) )
+        
+        for (i1, o1), (i2, o2) in itertools.product(enumerate(op_list), repeat=2):
+            self.set_g2_iwn(g_iwn[i1, i2], o1, dagger(o2))
+
+        return g_iwn
+        
     # ------------------------------------------------------------------
     def set_tail(self, g, op1_mat, op2_mat):
 
@@ -92,7 +111,7 @@ class TriqsExactDiagonalization(object):
             op1_mat, op2_mat, self.xi(g.mesh), Norder=tail.order_max)
 
         for idx in xrange(tail.order_max):
-            tail[idx+1][:] = raw_tail[idx]
+            tail[idx+1] = raw_tail[idx]
 
     # ------------------------------------------------------------------
     def xi(self, mesh):
@@ -103,13 +122,10 @@ class TriqsExactDiagonalization(object):
     # ------------------------------------------------------------------
     def set_g3_tau(self, g3_tau, op1, op2, op3):
         
-        assert( g3_tau.target_shape == (1,1,1,1) )
+        assert( g3_tau.target_shape == () )
 
-        op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
-        op3_mat = self.rep.sparse_matrix(op3)
-
-        ops_mat = np.array([op1_mat, op2_mat, op3_mat])
+        ops = [op1, op2, op3]
+        ops_mat = np.array([self.rep.sparse_matrix(op) for op in ops])
 
         for idxs, taus, perm, perm_sign in SquareTrianglesMesh(g3_tau):
 
@@ -120,29 +136,37 @@ class TriqsExactDiagonalization(object):
                 taus_perm, ops_perm_mat)
 
             for idx, d in zip(idxs, data):
-                g3_tau[list(idx)][:] = perm_sign * d
+                g3_tau[Idxs(idx)] = perm_sign * d
 
     # ------------------------------------------------------------------
     def set_g40_tau(self, g40_tau, g_tau):
 
         assert( type(g_tau.mesh) == MeshImTime )
-        #assert( g_tau.target_shape == g40_tau.target_shape )
+        assert( g_tau.target_shape == () )
+        assert( g_tau.target_shape == (1, 1, 1, 1) )
 
         for t1, t2, t3 in g40_tau.mesh:
-            g40_tau[t1, t2, t3][:] = \
-                g_tau(t1-t2)*g_tau(t3.value) - g_tau(t1.value)*g_tau(t3-t2)
+            g40_tau[t1, t2, t3] = g_tau(t1-t2) * g_tau(t3.value) - g_tau(t1.value) * g_tau(t3-t2)
+
+    # ------------------------------------------------------------------
+    def set_g40_tau_matrix(self, g40_tau, g_tau):
+
+        assert( type(g_tau.mesh) == MeshImTime )
+        assert( g_tau.target_shape == g40_tau.target_shape[:2] )
+        assert( g_tau.target_shape == g40_tau.target_shape[2:] )
+        
+        for t1, t2, t3 in g40_tau.mesh:
+            g40_tau[t1, t2, t3] *= 0.
+            g40_tau[t1, t2, t3] += np.einsum('ba,dc->abcd', g_tau(t1-t2), g_tau(t3.value))
+            g40_tau[t1, t2, t3] -= np.einsum('da,bc->abcd', g_tau(t1.value), g_tau(t3-t2))
     
     # ------------------------------------------------------------------
     def set_g4_tau(self, g4_tau, op1, op2, op3, op4):
-        
-        assert( g4_tau.target_shape == (1,1,1,1) )
 
-        op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
-        op3_mat = self.rep.sparse_matrix(op3)
-        op4_mat = self.rep.sparse_matrix(op4)        
+        assert( g4_tau.target_shape == () )
 
-        ops_mat = np.array([op1_mat, op2_mat, op3_mat, op4_mat])
+        ops = [op1, op2, op3, op4]
+        ops_mat = np.array([self.rep.sparse_matrix(op) for op in ops])
 
         for idxs, taus, perm, perm_sign in CubeTetrasMesh(g4_tau):
 
@@ -153,8 +177,17 @@ class TriqsExactDiagonalization(object):
                 taus_perm, ops_perm_mat)
 
             for idx, d in zip(idxs, data):
-                g4_tau[list(idx)][:] = perm_sign * d
+                g4_tau[Idxs(idx)] = perm_sign * d
 
     # ------------------------------------------------------------------
+    def set_g4_tau_matrix(self, g4_tau, op_list):
+        
+        assert( g4_tau.target_shape == tuple([len(op_list)]*4) )
+
+        for (i1, o1), (i2, o2), (i3, o3), (i4, o4) in \
+            itertools.product(enumerate(op_list), repeat=4):
+            self.set_g4_tau(g4_tau[i1, i2, i3, i4], o1, dagger(o2), o3, dagger(o4))
+
+        return g4_tau
    
 # ----------------------------------------------------------------------

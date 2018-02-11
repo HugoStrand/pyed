@@ -63,7 +63,7 @@ def test_two_particle_greens_function():
                      statistic='Fermion', n_points=100,
                      target_shape=(1,1))
     
-    ed.set_g2_tau(g_tau, c(up,0), c_dag(up,0))
+    ed.set_g2_tau(g_tau[0, 0], c(up,0), c_dag(up,0))
     
     # ------------------------------------------------------------------
     # -- Two particle Green's functions
@@ -75,8 +75,8 @@ def test_two_particle_greens_function():
     g40_tau = Gf(name='g40_tau', mesh=prodmesh, target_shape=(1,1,1,1))
     g4_tau = Gf(name='g4_tau', mesh=prodmesh, target_shape=(1,1,1,1))
 
-    ed.set_g40_tau(g40_tau, g_tau)
-    ed.set_g4_tau(g4_tau, c(up,0), c_dag(up,0), c(up,0), c_dag(up,0))
+    ed.set_g40_tau_matrix(g40_tau, g_tau)
+    ed.set_g4_tau(g4_tau[0, 0, 0, 0], c(up,0), c_dag(up,0), c(up,0), c_dag(up,0))
 
     # ------------------------------------------------------------------
     # -- compare

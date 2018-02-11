@@ -12,8 +12,14 @@ import itertools
 import numpy as np
 
 # ----------------------------------------------------------------------
+def Idxs(integer_index_list):
+    from pytriqs.gf import Idx
+    return tuple( Idx(i) for i in integer_index_list )
+
+# ----------------------------------------------------------------------
 def zero_outer_planes_and_equal_times(g4_tau):
 
+    from pytriqs.gf import Idx
     beta = g4_tau.mesh.components[0].beta
     
     for idxs, (t1, t2, t3) in enumerate_tau3(g4_tau):
@@ -21,7 +27,7 @@ def zero_outer_planes_and_equal_times(g4_tau):
            t1 == 0 or t1 == beta or \
            t2 == 0 or t2 == beta or \
            t3 == 0 or t3 == beta:
-            g4_tau[list(idxs)][:] = 0.0
+            g4_tau[Idxs(idxs)] = 0.0
 
 # ----------------------------------------------------------------------
 def enumerate_tau3(g4_tau, make_real=True, beta=None):
