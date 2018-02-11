@@ -14,6 +14,7 @@ import numpy as np
 
 from pytriqs.gf import MeshImTime, MeshProduct, Idx
 from pytriqs.operators import dagger
+from pytriqs.utility import mpi
 
 # ----------------------------------------------------------------------
 
@@ -21,6 +22,21 @@ from pyed.CubeTetras import CubeTetrasMesh, enumerate_tau3, Idxs
 from pyed.SquareTriangles import SquareTrianglesMesh, enumerate_tau2
 from pyed.SparseExactDiagonalization import SparseExactDiagonalization
 from pyed.SparseMatrixFockStates import SparseMatrixRepresentation
+
+# ----------------------------------------------------------------------
+def mpi_op_comb(op_list, repeat=2):
+
+    work_list = list(itertools.product(enumerate(op_list), repeat=repeat))
+    work_list = mpi.slice_array(np.array(work_list))
+
+    return work_list
+
+# ----------------------------------------------------------------------
+def mpi_all_reduce_g(g):
+    
+    g << mpi.all_reduce(mpi.world, g, lambda x, y : x + y)
+
+    return g
 
 # ----------------------------------------------------------------------
 class TriqsExactDiagonalization(object):
@@ -71,8 +87,10 @@ class TriqsExactDiagonalization(object):
 
         assert( g_tau.target_shape == tuple([len(op_list)]*2) )
 
-        for (i1, o1), (i2, o2) in itertools.product(enumerate(op_list), repeat=2):
+        for (i1, o1), (i2, o2) in mpi_op_comb(op_list, repeat=2):
             self.set_g2_tau(g_tau[i1, i2], o1, dagger(o2))
+
+        g_tau = mpi_all_reduce_g(g_tau)
 
         return g_tau
 
@@ -97,9 +115,11 @@ class TriqsExactDiagonalization(object):
 
         assert( g_iwn.target_shape == tuple([len(op_list)]*2) )
         
-        for (i1, o1), (i2, o2) in itertools.product(enumerate(op_list), repeat=2):
+        for (i1, o1), (i2, o2) in mpi_op_comb(op_list, repeat=2):
             self.set_g2_iwn(g_iwn[i1, i2], o1, dagger(o2))
 
+        g_iw = mpi_all_reduce_g(g_iwn)
+        
         return g_iwn
         
     # ------------------------------------------------------------------
@@ -185,9 +205,12 @@ class TriqsExactDiagonalization(object):
         assert( g4_tau.target_shape == tuple([len(op_list)]*4) )
 
         for (i1, o1), (i2, o2), (i3, o3), (i4, o4) in \
-            itertools.product(enumerate(op_list), repeat=4):
+            mpi_op_comb(op_list, repeat=4):
+
             self.set_g4_tau(g4_tau[i1, i2, i3, i4], o1, dagger(o2), o3, dagger(o4))
 
+        g4_tau = mpi_all_reduce_g(g4_tau)
+        
         return g4_tau
    
 # ----------------------------------------------------------------------
