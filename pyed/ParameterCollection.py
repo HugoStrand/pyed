@@ -30,6 +30,9 @@ class ParameterCollection(object):
     def items(self):
         return self.__dict__.items()
 
+    def keys(self):
+   	return self.__dict__.keys()
+
     def dict(self):
         return self.__dict__
 
