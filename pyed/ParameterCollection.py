@@ -36,6 +36,9 @@ class ParameterCollection(object):
     def dict(self):
         return self.__dict__
 
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
     def __reduce_to_dict__(self):
         return self.__dict__
 

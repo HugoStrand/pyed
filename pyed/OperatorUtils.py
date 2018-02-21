@@ -52,7 +52,7 @@ def op_serialize_fundamental(op):
     return dag, tuple(idxs)
     
 # ----------------------------------------------------------------------
-def get_operator_index_map(fundamental_operators):
+def get_operator_index_map(fundamental_operators, include_dag=False):
 
     """ Construct list of tuples of orbital index pairs from list of
     fundamental operators. """
@@ -60,8 +60,11 @@ def get_operator_index_map(fundamental_operators):
     op_idx_map = []
     for op in fundamental_operators:
         dag, idxs = op_serialize_fundamental(op)
-        assert( dag is False ) # Only accept annihilation ops
-        op_idx_map.append(tuple(idxs))
+        if include_dag:
+            op_idx_map.append((dag, tuple(idxs)))
+        else:
+            assert( dag is False ) # Only accept annihilation ops
+            op_idx_map.append(tuple(idxs))
 
     return op_idx_map
 
@@ -137,6 +140,41 @@ def operator_single_particle_transform(op, U, fundamental_operators):
                     tup = (dag, tuple(idxs))
                     if tup in op_trans_dict.keys():
                         op_factor *= op_trans_dict[tup]
+                    else:
+                        op_factor *= {False:c, True:c_dag}[dag](*idxs)
+                    
+            else: # constant prefactor
+                op_factor *= factor
+
+        op_trans += op_factor
+
+    return op_trans
+
+# ----------------------------------------------------------------------
+def relabel_operators(op, from_list, to_list):
+    
+    """ Transform the operator op according to the single particle 
+    transform matrix U defined in the subspace of operators listed in 
+    fundamental_operators. """
+
+    op_idx_map = get_operator_index_map(from_list, include_dag=True)
+    op_idx_set = set(op_idx_map)
+
+    from_list, to_list = list(from_list), list(to_list)
+
+    # -- Loop over given operator and substitute operators
+    # -- in from_list to to_list
+    
+    op_trans = Operator()
+    
+    for term in op:
+        op_factor = Operator(1.)
+        for factor in term:
+            if type(factor) is list:
+                for dag, idxs in factor:
+                    tup = (dag, tuple(idxs))
+                    if tup in op_idx_set:
+                        op_factor *= to_list[op_idx_map.index(tup)]
                     else:
                         op_factor *= {False:c, True:c_dag}[dag](*idxs)
                     
