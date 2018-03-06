@@ -14,6 +14,7 @@ def g2_single_particle_transform(g2, T):
     """ Transform the single-particle Green's function according to the
     give unitary single particle transform matrix T """
 
+    T = np.mat(T)
     g2t = g2.copy()
     g2t.from_L_G_R(T, g2, T.H)
 
