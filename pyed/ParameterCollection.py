@@ -83,7 +83,15 @@ class ParameterCollection(object):
                 pc_txt = ''.join([ key + '.' + row + '\n' for row in pc_list ])
                 out += pc_txt
             else:
-                out += ''.join([key, ' = ', str(value)]) + '\n'
+                str_value = str(value)
+
+                # Cut things that take more than five rows
+                str_value_lines = str_value.splitlines()
+                max_lines = 10
+                if len(str_value_lines) > max_lines:
+                    str_value = '\n'.join(str_value_lines[:max_lines] + ['...'])
+                
+                out += ''.join([key, ' = ', str_value]) + '\n'
         return out
 
     def get_my_name(self):
