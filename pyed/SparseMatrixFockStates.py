@@ -76,6 +76,21 @@ class SparseMatrixRepresentation(object):
             matrix_rep = matrix_rep + product
             
         return matrix_rep
+
+    # ------------------------------------------------------------------
+    def sparse_sympy_matrix(self, triqs_operator_expression):
+
+        Hsp = self.sparse_matrix(triqs_operator_expression)
+
+        from sympy.matrices import SparseMatrix
+        from sympy.simplify.simplify import nsimplify
+        
+        d = dict([ ((i, j), nsimplify(val)) \
+                   for (i, j), val in Hsp.todok().iteritems() ])
+        
+        H = SparseMatrix(Hsp.shape[0], Hsp.shape[1], d)
+
+        return H
     
 # ----------------------------------------------------------------------
 class SparseMatrixCreationOperators:
