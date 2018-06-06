@@ -25,6 +25,10 @@ from pyed.OperatorUtils import op_is_fundamental, op_serialize_fundamental
 from pyed.OperatorUtils import get_quadratic_operator, \
     quadratic_matrix_from_operator, operator_single_particle_transform
 
+from pyed.OperatorUtils import symmetrize_quartic_tensor
+from pyed.OperatorUtils import quartic_tensor_from_operator
+from pyed.OperatorUtils import operator_from_quartic_tensor
+
 # ----------------------------------------------------------------------
 def test_fundamental():
 
@@ -155,7 +159,29 @@ def test_single_particle_transform(verbose=False):
         print 'Ht_loc_ref =', Ht_loc_ref
     
     assert( (Ht_loc - Ht_loc_ref).is_zero() )
+
+# ----------------------------------------------------------------------
+def test_quartic_tensor_from_operator(verbose=False):
+
+
+    N = 3
+    fundamental_operators = [ c(0, x) for x in range(N) ]
+    shape = (N, N, N, N)
     
+    U = np.random.random(shape) + 1.j * np.random.random(shape)
+    U_sym = symmetrize_quartic_tensor(U)
+    
+    H = operator_from_quartic_tensor(U, fundamental_operators)
+    U_ref = quartic_tensor_from_operator(H, fundamental_operators)
+
+    np.testing.assert_array_almost_equal(U_ref, U_sym)
+
+    if verbose:
+        print '-'*72
+        import itertools
+        for idxs in itertools.product(range(N), repeat=4):
+            print idxs, U_ref[idxs] - U_sym[idxs], U[idxs], U_ref[idxs], U_sym[idxs]
+
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -163,3 +189,4 @@ if __name__ == '__main__':
     test_quadratic()
     test_quartic(verbose=True)
     test_single_particle_transform(verbose=True)
+    test_quartic_tensor_from_operator(verbose=True)

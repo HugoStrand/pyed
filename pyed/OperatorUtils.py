@@ -6,6 +6,7 @@ Author: Hugo U.R. Strand (2018) hugo.strand@gmail.com """
 
 # ----------------------------------------------------------------------
 
+import itertools
 import numpy as np
 
 from pytriqs.operators import c, c_dag, Operator, dagger
@@ -91,7 +92,83 @@ def quadratic_matrix_from_operator(op, fundamental_operators):
                 h_quad[i, j] = prefactor
 
     return h_quad
+
+# ----------------------------------------------------------------------
+def symmetrize_quartic_tensor(U, conjugation=False):
+
+    N = U.shape[0]
+    assert( U.shape == tuple([N]*4) )
     
+    # -- Permutation symmetries
+
+    U = 0.5 * ( U - np.swapaxes(U, 0, 1) )
+    U = 0.5 * ( U - np.swapaxes(U, 2, 3) )
+
+    # -- Conjugation symmetry
+
+    if conjugation:
+        U = 0.5 * ( U + np.swapaxes(np.swapaxes(U, 1, 2), 0, 3).conj() )
+
+    # -- Pauli principle
+    
+    for n in xrange(N):
+        U[n, n, :, :] = 0
+        U[:, :, n, n] = 0
+    
+    return U
+    
+# ----------------------------------------------------------------------
+def quartic_tensor_from_operator(op, fundamental_operators):
+
+    # -- Convert fundamental operators back and forth from index
+
+    op_idx_map = get_operator_index_map(fundamental_operators)
+    op_idx_set = set(op_idx_map)
+
+    nop = len(fundamental_operators)
+    h_quart = np.zeros((nop, nop, nop, nop), dtype=np.complex)
+    
+    for term in op:
+        op_list, prefactor = term
+        if len(op_list) == 4:
+
+            d, t = zip(*op_list) # split in two lists with daggers and tuples resp
+            t = [tuple(x) for x in t]
+
+            assert( d == (True, True, False, False) ) # check creation/annihilation order
+            
+            if all([ x in op_idx_set for x in t ]):
+                i, j, k, l = [ op_idx_map.index(x) for x in t ]
+
+                # -- all pair wise permutations: i <-> j and k <-> l with fermionic permutation signs
+                h_quart[i, j, k, l] = +0.25 * prefactor
+                h_quart[j, i, k, l] = -0.25 * prefactor
+                h_quart[i, j, l, k] = -0.25 * prefactor
+                h_quart[j, i, l, k] = +0.25 * prefactor
+
+    return h_quart
+
+# ----------------------------------------------------------------------
+def operator_from_quartic_tensor(h_quart, fundamental_operators):
+
+    # -- Convert fundamental operators back and forth from index
+
+    op_idx_map = get_operator_index_map(fundamental_operators)
+    op_idx_set = set(op_idx_map)
+
+    nop = len(fundamental_operators)
+
+    H = Operator(0.)
+
+    for t in itertools.product(enumerate(fundamental_operators), repeat=4):
+        idx, ops = zip(*t)
+        o1, o2, o3, o4 = ops
+        o1, o2 = dagger(o1), dagger(o2)
+
+        H += h_quart[idx] * o1 * o2 * o3 * o4
+
+    return H    
+
 # ----------------------------------------------------------------------
 def operator_single_particle_transform(op, U, fundamental_operators):
     
