@@ -94,6 +94,33 @@ def quadratic_matrix_from_operator(op, fundamental_operators):
     return h_quad
 
 # ----------------------------------------------------------------------
+def quartic_permutation_symmetrize(U):
+
+    U = 0.5 * ( U - np.swapaxes(U, 0, 1) )
+    U = 0.5 * ( U - np.swapaxes(U, 2, 3) )
+
+    return U
+
+# ----------------------------------------------------------------------
+def quartic_conjugation_symmetrize(U):
+
+    U = 0.5 * ( U + np.swapaxes(np.swapaxes(U, 1, 2), 0, 3).conj() )
+
+    return U
+
+# ----------------------------------------------------------------------
+def quartic_pauli_symmetrize(U):
+
+    N = U.shape[0]
+    assert( U.shape == tuple([N]*4) )
+
+    for n in xrange(N):
+        U[n, n, :, :] = 0
+        U[:, :, n, n] = 0
+
+    return U
+
+# ----------------------------------------------------------------------
 def symmetrize_quartic_tensor(U, conjugation=False):
 
     N = U.shape[0]
@@ -101,24 +128,30 @@ def symmetrize_quartic_tensor(U, conjugation=False):
     
     # -- Permutation symmetries
 
-    U = 0.5 * ( U - np.swapaxes(U, 0, 1) )
-    U = 0.5 * ( U - np.swapaxes(U, 2, 3) )
+    #U = 0.5 * ( U - np.swapaxes(U, 0, 1) )
+    #U = 0.5 * ( U - np.swapaxes(U, 2, 3) )
+
+    U = quartic_permutation_symmetrize(U)
 
     # -- Conjugation symmetry
 
     if conjugation:
-        U = 0.5 * ( U + np.swapaxes(np.swapaxes(U, 1, 2), 0, 3).conj() )
+        #U = 0.5 * ( U + np.swapaxes(np.swapaxes(U, 1, 2), 0, 3).conj() )
+        U = quartic_conjugation_symmetrize(U)
 
     # -- Pauli principle
     
-    for n in xrange(N):
-        U[n, n, :, :] = 0
-        U[:, :, n, n] = 0
+    #for n in xrange(N):
+    #    U[n, n, :, :] = 0
+    #    U[:, :, n, n] = 0
+
+    U = quartic_pauli_symmetrize(U)
     
     return U
     
 # ----------------------------------------------------------------------
-def quartic_tensor_from_operator(op, fundamental_operators):
+def quartic_tensor_from_operator(op, fundamental_operators,
+                                 perm_sym=False):
 
     # -- Convert fundamental operators back and forth from index
 
@@ -135,16 +168,25 @@ def quartic_tensor_from_operator(op, fundamental_operators):
             d, t = zip(*op_list) # split in two lists with daggers and tuples resp
             t = [tuple(x) for x in t]
 
-            assert( d == (True, True, False, False) ) # check creation/annihilation order
+            # check creation/annihilation order
+            assert( d == (True, True, False, False) ) 
             
             if all([ x in op_idx_set for x in t ]):
                 i, j, k, l = [ op_idx_map.index(x) for x in t ]
 
-                # -- all pair wise permutations: i <-> j and k <-> l with fermionic permutation signs
-                h_quart[i, j, k, l] = +0.25 * prefactor
-                h_quart[j, i, k, l] = -0.25 * prefactor
-                h_quart[i, j, l, k] = -0.25 * prefactor
-                h_quart[j, i, l, k] = +0.25 * prefactor
+                if perm_sym:
+                    # -- all pair wise permutations:
+                    # -- i <-> j and k <-> l
+                    # -- with fermionic permutation signs
+
+                    h_quart[i, j, k, l] = +0.25 * prefactor
+                    h_quart[j, i, k, l] = -0.25 * prefactor
+                    h_quart[j, i, l, k] = +0.25 * prefactor
+                    h_quart[i, j, l, k] = -0.25 * prefactor
+ 
+                else:
+
+                    h_quart[i, j, k, l] = prefactor
 
     return h_quart
 

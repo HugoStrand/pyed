@@ -80,7 +80,7 @@ class TriqsExactDiagonalization(object):
         g_tau.data[:] = self.ed.get_tau_greens_function_component(
                 tau, op1_mat, op2_mat)
 
-        self.set_tail(g_tau, op1_mat, op2_mat)
+        #self.set_tail(g_tau, op1_mat, op2_mat)
         
     # ------------------------------------------------------------------
     def set_g2_tau_matrix(self, g_tau, op_list):
@@ -108,7 +108,7 @@ class TriqsExactDiagonalization(object):
         g_iwn.data[:] = self.ed.get_frequency_greens_function_component(
                 iwn, op1_mat, op2_mat, self.xi(g_iwn.mesh))
 
-        self.set_tail(g_iwn, op1_mat, op2_mat)
+        #self.set_tail(g_iwn, op1_mat, op2_mat)
 
     # ------------------------------------------------------------------
     def set_g2_iwn_matrix(self, g_iwn, op_list):
