@@ -11,15 +11,10 @@ The original purpose of `pyed` is to provide exact solutions to small finite sys
 
 ## Installation
 
-To do: Add `setup_utils` install script
-
-There is currently no formal installation scripts packed with `pyed`. To use and develop the module simply ammend your `PYTHON_PATH` with the `./pyed/` folder, e.g., add the follwing
-
 ```
-export PYTHON_PATH=${HOME}/path/to/pyed:$PYTHON_PATH
+pip install git+https://github.com/yaros72/pyed
 ```
 
-in your `.bashrc`, `.bash_profile`, or `.profile` file.
 
 ## Documentation
 
