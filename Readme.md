@@ -1,6 +1,6 @@
 # **PYED**: Exact diagonalization for finite quantum systems
 
-Copyright (C) 2017, H. U.R. Strand, Ya.V. Zhumagulov
+Copyright (C) 2018, H. U.R. Strand, Ya.V. Zhumagulov
 
 The python module `pyed` implements exact diagonalization for finite fermionic many-body quantum systems, together with calculations of several response functions in imagianary time.
 

@@ -46,7 +46,7 @@ class SparseExactDiagonalization(object):
 
         self._diagonalize_hamiltonian()
         self._calculate_partition_function()
-        #self._calculate_density_matrix()
+        self._calculate_density_matrix()
 
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
@@ -282,8 +282,8 @@ class SparseExactDiagonalization(object):
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
         bar = progressbar.ProgressBar()
         for i in bar(range(len(tau))):
-            et_p = np.exp((-self.beta + tau[i])*self.E)[:,None]
-            et_m = np.exp(-tau[i]*self.E)[:,None]
+            et_p = np.exp((-self.beta +  tau[i])*self.E)[:,None]
+            et_m = np.exp(- tau[i]*self.E)[:,None]
             G[i] = - (op1_eig.multiply(et_p)*op2_eig.multiply(et_m)).diagonal().sum()
         G /= self.Z
         return G
