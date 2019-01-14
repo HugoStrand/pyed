@@ -44,12 +44,11 @@ class TriqsExactDiagonalization(object):
     """ Exact diagonalization for Triqs operator expressions. """
 
     # ------------------------------------------------------------------
-    def __init__(self, H, fundamental_operators, beta):
-
+    def __init__(self, H, fundamental_operators, beta,symmetry='SU(2)'):
+        self.symmetry=symmetry
         self.beta = beta
-        self.rep = SparseMatrixRepresentation(fundamental_operators)
-        self.ed = SparseExactDiagonalization(
-            self.rep.sparse_matrix(H), self.rep.blocks,beta)
+        self.rep = SparseMatrixRepresentation(fundamental_operators,symmetry=symmetry)
+        self.ed = SparseExactDiagonalization(self.rep.sparse_matrix(H), self.rep.blocks,beta,symmetry=symmetry)
 
     # ------------------------------------------------------------------
     def get_expectation_value(self, op):

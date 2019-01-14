@@ -31,7 +31,7 @@ class SparseExactDiagonalization(object):
 
     # ------------------------------------------------------------------
     def __init__(self, H,blocks, beta,
-                 nstates=None, hermitian=True,
+                 nstates=None, hermitian=True,symmetry='SU(2)',
                  v0=None, tol=0):
 
         self.v0 = v0
@@ -39,6 +39,7 @@ class SparseExactDiagonalization(object):
 
         self.nstates = nstates
         self.hermitian = hermitian
+        self.symmetry=symmetry
 
         self.H = H
         self.blocks=blocks
@@ -50,20 +51,30 @@ class SparseExactDiagonalization(object):
 
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
-        self.U=csr_matrix(self.H.shape,dtype=np.float)
-        self.E=np.zeros(self.H.shape[0])
-        print 'Hamiltonian diagonalization:'
-        bar = progressbar.ProgressBar()
-        for i in bar(range(len(self.blocks))):
-            block=self.blocks[i]
-	    X,Y=np.meshgrid(block,block)
-            E,U=np.linalg.eigh(self.H[X,Y].todense())
-            self.E[block]=E
-            self.U[Y,X]=U
-	    del X,Y
-        self.E=np.array(self.E)
-        self.E0 = np.min(self.E)
-        self.E = self.E-self.E0
+
+        if self.symmetry=='U(1)':
+
+            self.E, self.U = np.linalg.eigh(self.H.todense())
+            self.U = csr_matrix(self.U)
+            self.E0 = np.min(self.E)
+            self.E = self.E - self.E0
+
+        else:
+
+            self.U=csr_matrix(self.H.shape,dtype=np.float)
+            self.E=np.zeros(self.H.shape[0])
+            print 'Hamiltonian diagonalization:'
+            bar = progressbar.ProgressBar()
+            for i in bar(range(len(self.blocks))):
+                block=self.blocks[i]
+                X,Y=np.meshgrid(block,block)
+                E,U=np.linalg.eigh(self.H[X,Y].todense())
+                self.E[block]=E
+                self.U[Y,X]=U
+    	    del X,Y
+            self.E=np.array(self.E)
+            self.E0 = np.min(self.E)
+            self.E = self.E-self.E0
 
     # ------------------------------------------------------------------
     def _calculate_partition_function(self):
@@ -92,9 +103,9 @@ class SparseExactDiagonalization(object):
         op=self._operators_to_eigenbasis([operator])[0]
         return (op.diagonal()*np.exp(-self.beta * self.E)).sum()/self.Z
     # ------------------------------------------------------------------
-    def get_free_energy(self):
+    def get_U(1)_energy(self):
 
-        r""" Free energy using ground state energy shift
+        r""" U(1) energy using ground state energy shift
 
         Z = \sum_n e^{-\beta E_n}
         \Omega = -1/\beta \ln Z
