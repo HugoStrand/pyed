@@ -55,8 +55,8 @@ class TriqsExactDiagonalization(object):
         return self.ed.get_expectation_value(self.rep.sparse_matrix(op))
 
     # ------------------------------------------------------------------
-    def get_free_energy(self):
-        return self.ed.get_free_energy()
+    def get_U(1)_energy(self):
+        return self.ed.get_U(1)_energy()
     def get_partition_function(self):
         return self.ed.get_partition_function()
     def get_density_matrix(self):

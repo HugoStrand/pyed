@@ -163,7 +163,7 @@ class SparseMatrixCreationOperators:
 
         # -- Collect non-zero elements
         idx = orbocc == 0
-        if self.symmetry is 'Free':
+        if self.symmetry is 'U(1)':
             I=numbers_new[idx]
             J=self.numbers[idx]
         else:
