@@ -20,6 +20,7 @@ from transform_kanamori import h_int_kanamori_transformed
 
 # ----------------------------------------------------------------------
 
+from pyed.OperatorUtils import fundamental_operators_from_gf_struct
 from pyed.OperatorUtils import op_is_fundamental, op_serialize_fundamental
 
 from pyed.OperatorUtils import get_quadratic_operator, \
@@ -28,6 +29,27 @@ from pyed.OperatorUtils import get_quadratic_operator, \
 from pyed.OperatorUtils import symmetrize_quartic_tensor
 from pyed.OperatorUtils import quartic_tensor_from_operator
 from pyed.OperatorUtils import operator_from_quartic_tensor
+
+# ----------------------------------------------------------------------
+def test_gf_struct():
+
+    orb_idxs = [0, 1, 2]
+    spin_idxs = ['up', 'do']
+    gf_struct = [ [spin_idx, orb_idxs] for spin_idx in spin_idxs ]
+    
+    fundamental_operators = fundamental_operators_from_gf_struct(gf_struct)
+
+    fundamental_operators_ref = [
+        c('up', 0), 
+        c('up', 1), 
+        c('up', 2), 
+        c('do', 0), 
+        c('do', 1), 
+        c('do', 2),
+        ]
+
+    print fundamental_operators
+    assert( fundamental_operators == fundamental_operators_ref )
 
 # ----------------------------------------------------------------------
 def test_fundamental():
@@ -172,7 +194,7 @@ def test_quartic_tensor_from_operator(verbose=False):
     U_sym = symmetrize_quartic_tensor(U)
     
     H = operator_from_quartic_tensor(U, fundamental_operators)
-    U_ref = quartic_tensor_from_operator(H, fundamental_operators)
+    U_ref = quartic_tensor_from_operator(H, fundamental_operators, perm_sym=True)
 
     np.testing.assert_array_almost_equal(U_ref, U_sym)
 

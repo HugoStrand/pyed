@@ -11,6 +11,20 @@ import numpy as np
 
 from pytriqs.operators import c, c_dag, Operator, dagger
 
+# ----------------------------------------------------------------------    
+def fundamental_operators_from_gf_struct(gf_struct):
+
+    """ Return a list of annihilation operators with the quantum numbers 
+    defined in the gf_struct """
+    
+    fundamental_operators = []
+    for block_name, indices in gf_struct:
+        for index in indices:
+            fundamental_operators.append(
+                c(block_name, index) )
+
+    return fundamental_operators
+
 # ----------------------------------------------------------------------
 def get_quadratic_operator(h, fundamental_operators):
 
