@@ -14,7 +14,7 @@ import numpy as np
 from pytriqs.gf import Gf
 from pytriqs.gf import MeshImTime, MeshImFreq
 
-from pytriqs.gf import GfImTime, GfImFreq, TailGf
+from pytriqs.gf import GfImTime, GfImFreq
 from pytriqs.operators import c, c_dag
 
 from pytriqs.gf import inverse, iOmega_n, InverseFourier
@@ -74,6 +74,7 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
         plt.subplot(*subp); subp[-1] += 1
         diff = G_tau - G_tau_ed
         oplot(diff.real)
+        oplot(diff.imag)
         
         plt.subplot(*subp); subp[-1] += 1
         oplot(G_iw)

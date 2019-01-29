@@ -166,6 +166,7 @@ class TriqsExactDiagonalization(object):
         assert( g40_tau.target_shape == (1, 1, 1, 1) )
 
         def val(g, t):
+            t = float(t)
             beta = g.mesh.beta
             n, t = np.divmod(t, beta)
             s = 2.*(n % 2) - 1.
@@ -177,7 +178,7 @@ class TriqsExactDiagonalization(object):
             t32 = t3 - t2
             
             #g40_tau[t1, t2, t3] = g_tau(t1-t2) * g_tau(t3.value) - g_tau(t1.value) * g_tau(t3-t2)
-            g40_tau[t1, t2, t3] = val(g_tau, t12) * val(g_tau, t3.value) - val(g_tau, t1.value) *  val(g_tau, t32)
+            g40_tau[t1, t2, t3] = val(g_tau, t12) * val(g_tau, t3) - val(g_tau, t1) *  val(g_tau, t32)
 
     # ------------------------------------------------------------------
     def set_g40_tau_matrix(self, g40_tau, g_tau):
@@ -185,11 +186,20 @@ class TriqsExactDiagonalization(object):
         assert( type(g_tau.mesh) == MeshImTime )
         assert( g_tau.target_shape == g40_tau.target_shape[:2] )
         assert( g_tau.target_shape == g40_tau.target_shape[2:] )
+
+        def val(g, t):
+            t = float(t)
+            beta = g.mesh.beta
+            n, t = np.divmod(t, beta)
+            s = 2.*(n % 2) - 1.
+            return s * g(t)
         
         for t1, t2, t3 in g40_tau.mesh:
             g40_tau[t1, t2, t3] *= 0.
-            g40_tau[t1, t2, t3] += np.einsum('ba,dc->abcd', g_tau(t1-t2), g_tau(t3.value))
-            g40_tau[t1, t2, t3] -= np.einsum('da,bc->abcd', g_tau(t1.value), g_tau(t3-t2))
+            #g40_tau[t1, t2, t3] += np.einsum('ba,dc->abcd', g_tau(t1-t2), g_tau(t3.value))
+            #g40_tau[t1, t2, t3] -= np.einsum('da,bc->abcd', g_tau(t1.value), g_tau(t3-t2))
+            g40_tau[t1, t2, t3] += np.einsum('ba,dc->abcd', val(g_tau, t1-t2), val(g_tau, t3))
+            g40_tau[t1, t2, t3] -= np.einsum('da,bc->abcd', val(g_tau, t1), val(g_tau, t3-t2))
     
     # ------------------------------------------------------------------
     def set_g4_tau(self, g4_tau, op1, op2, op3, op4):
