@@ -15,7 +15,7 @@ import numpy as np
 from pytriqs.gf import MeshImTime, MeshProduct, Idx
 from pytriqs.operators import dagger
 from pytriqs.utility import mpi
-
+from pytriqs.operators import c, c_dag,dagger
 # ----------------------------------------------------------------------
 
 from pyed.CubeTetras import CubeTetrasMesh, enumerate_tau3, Idxs
@@ -44,19 +44,18 @@ class TriqsExactDiagonalization(object):
     """ Exact diagonalization for Triqs operator expressions. """
 
     # ------------------------------------------------------------------
-    def __init__(self, H, fundamental_operators, beta,symmetry='SU(2)'):
-        self.symmetry=symmetry
+    def __init__(self, H, fundamental_operators, beta):
         self.beta = beta
-        self.rep = SparseMatrixRepresentation(fundamental_operators,symmetry=symmetry)
-        self.ed = SparseExactDiagonalization(self.rep.sparse_matrix(H), self.rep.blocks,beta,symmetry=symmetry)
+        self.rep = SparseMatrixRepresentation(fundamental_operators)
+        self.ed = SparseExactDiagonalization(self.rep.sparse_matrix(H), self.rep.blocks,beta)
 
     # ------------------------------------------------------------------
     def get_expectation_value(self, op):
         return self.ed.get_expectation_value(self.rep.sparse_matrix(op))
 
     # ------------------------------------------------------------------
-    def get_U(1)_energy(self):
-        return self.ed.get_U(1)_energy()
+    def get_free_energy(self):
+        return self.ed.get_free_energy()
     def get_partition_function(self):
         return self.ed.get_partition_function()
     def get_density_matrix(self):

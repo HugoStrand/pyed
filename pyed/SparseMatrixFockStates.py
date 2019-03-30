@@ -21,7 +21,7 @@ class SparseMatrixRepresentation(object):
     creation operators. """
 
     # ------------------------------------------------------------------
-    def __init__(self, fundamental_operators,symmetry='SU(2)'):
+    def __init__(self, fundamental_operators):
 
         self.fundamental_operators = fundamental_operators
 
@@ -49,9 +49,8 @@ class SparseMatrixRepresentation(object):
             (dag, list(idx)) for dag, idx in self.operator_labels ]
 
         self.nfermions = len(self.operator_labels)
-        self.symmetry=symmetry
         self.sparse_operators = \
-            SparseMatrixCreationOperators(self.nfermions,self.symmetry)
+            SparseMatrixCreationOperators(self.nfermions)
         self.blocks=self.sparse_operators.blocks
     # ------------------------------------------------------------------
     def sparse_matrix(self, triqs_operator_expression):
@@ -85,11 +84,10 @@ class SparseMatrixCreationOperators:
     creation operators, for finite number of fermions. """
 
     # ------------------------------------------------------------------
-    def __init__(self, nfermions,symmetry):
+    def __init__(self, nfermions):
 
         self.nfermions = nfermions
         self.nstates = 2**nfermions
-        self.symmetry=symmetry
 
         # -- Make python based fock states
         self.numbers = np.arange(self.nstates, dtype=np.uint32)
@@ -105,30 +103,16 @@ class SparseMatrixCreationOperators:
         indexes_const=[]
         self.blocks=[]
 
-        if self.symmetry== 'SU(2)':
-            for n_up in range(self.nfermions/2+1):
-                for n_down in range(self.nfermions/2+1):
-                    indexes=np.where((np.sum(states_up,axis=1)==n_up)&(np.sum(states_down,axis=1)==n_down))[0]
-                    indexes_const.append(indexes)
-            self.permutation=np.zeros(self.nstates)
-            self.permutation[np.concatenate(indexes_const,axis=0)]=np.arange(self.nstates)
-            self.permutation=np.array(self.permutation,dtype=np.int)
-            for n_up in range(self.nfermions/2+1):
-                for n_down in range(self.nfermions/2+1):
-                    indexes=np.where((np.sum(states_up,axis=1)==n_up)&(np.sum(states_down,axis=1)==n_down))[0].flatten()
-                    self.blocks.append(self.permutation[indexes])
-
-        elif self.symmetry=='Sz':
-
-            for n in range(self.nfermions+1):
-                indexes=np.where(np.sum(states_up+states_down,axis=1)==n)[0]
+        for n_up in range(self.nfermions/2+1):
+            for n_down in range(self.nfermions/2+1):
+                indexes=np.where((np.sum(states_up,axis=1)==n_up)&(np.sum(states_down,axis=1)==n_down))[0]
                 indexes_const.append(indexes)
-            self.permutation=np.zeros(self.nstates)
-            self.permutation[np.concatenate(indexes_const,axis=0)]=np.arange(self.nstates)
-            self.permutation=np.array(self.permutation,dtype=np.int)
-
-            for n in range(self.nfermions+1):
-                indexes=np.where(np.sum(states_up+states_down,axis=1)==n)[0].flatten()
+        self.permutation=np.zeros(self.nstates)
+        self.permutation[np.concatenate(indexes_const,axis=0)]=np.arange(self.nstates)
+        self.permutation=np.array(self.permutation,dtype=np.int)
+        for n_up in range(self.nfermions/2+1):
+            for n_down in range(self.nfermions/2+1):
+                indexes=np.where((np.sum(states_up,axis=1)==n_up)&(np.sum(states_down,axis=1)==n_down))[0].flatten()
                 self.blocks.append(self.permutation[indexes])
 
         self.c_dag = []
@@ -163,12 +147,9 @@ class SparseMatrixCreationOperators:
 
         # -- Collect non-zero elements
         idx = orbocc == 0
-        if self.symmetry is 'U(1)':
-            I=numbers_new[idx]
-            J=self.numbers[idx]
-        else:
-            I = self.permutation[numbers_new[idx]]
-            J = self.permutation[self.numbers[idx]]
+
+        I = self.permutation[numbers_new[idx]]
+        J = self.permutation[self.numbers[idx]]
 
         D = sign[idx]
 
