@@ -30,61 +30,31 @@ class SparseExactDiagonalization(object):
     function calculator. """
 
     # ------------------------------------------------------------------
-    def __init__(self, H,blocks, beta,occupation,
-                 symmetry='SU(2)',nstates=None, hermitian=True,
-                 v0=None, tol=0):
-
-        self.v0 = v0
-        self.tol = tol
-
-        self.nstates = nstates
-        self.hermitian = hermitian
-        self.symmetry=symmetry
-
+    def __init__(self, H,blocks, beta):
         self.H = H
-        self.occupation = occupation
         self.blocks=blocks
         self.beta = beta
 
-        if beta==np.inf:
-            self._diagonalize_hamiltonian()
-        else:
-            self._diagonalize_hamiltonian()
-            self._calculate_partition_function()
-            self._calculate_density_matrix()
+        self._diagonalize_hamiltonian()
+        self._calculate_partition_function()
+        # self._calculate_density_matrix()
 
     # ------------------------------------------------------------------
     def _diagonalize_hamiltonian(self):
-        if self.beta==np.inf:
-            self.H_blocks={};self.numbers=np.zeros(self.H.shape[0])
-            for i in range(self.nfermions+1):
-                self.H_blocks[i]=self.H[self.blocks[i]][:,self.blocks[i]]
-                self.numbers[self.blocks[i]]=i
-            self.E0,self.U0=eigsh_sparse(self.H,k=1,which='SA')
-            self.U0=csr_matrix(self.U0)
-            self.N=int((self.U0.getH()*self.occupation*self.U0).data[0]+0.1)
-            self.U0=np.matrix(self.U0[self.blocks[self.N]])
-        else:
-            if self.symmetry=='U(1)':
-                self.E, self.U = np.linalg.eigh(self.H.todense())
-                self.U = csr_matrix(self.U)
-                self.E0 = np.min(self.E)
-                self.E = self.E - self.E0
-            else:
-                self.U=csr_matrix(self.H.shape,dtype=np.float)
-                self.E=np.zeros(self.H.shape[0])
-                print 'Hamiltonian diagonalization:'
-                bar = progressbar.ProgressBar()
-                for i in bar(range(len(self.blocks))):
-                    block=self.blocks[i]
-                    X,Y=np.meshgrid(block,block)
-                    E,U=np.linalg.eigh(self.H[X,Y].todense())
-                    self.E[block]=E
-                    self.U[Y,X]=U
-        	    del X,Y
-                self.E=np.array(self.E)
-                self.E0 = np.min(self.E)
-                self.E = self.E-self.E0
+        self.U=csr_matrix(self.H.shape,dtype=np.float)
+        self.E=np.zeros(self.H.shape[0])
+        print 'Hamiltonian diagonalization:'
+        bar = progressbar.ProgressBar()
+        for i in bar(range(len(self.blocks))):
+            block=self.blocks[i]
+            X,Y=np.meshgrid(block,block)
+            E,U=np.linalg.eigh(self.H[X,Y].todense())
+            self.E[block]=E
+            self.U[Y,X]=U
+            del X,Y
+        self.E=np.array(self.E)
+        self.E0 = np.min(self.E)
+        self.E = self.E-self.E0
 
     # ------------------------------------------------------------------
     def _calculate_partition_function(self):
@@ -132,7 +102,12 @@ class SparseExactDiagonalization(object):
 
     # ------------------------------------------------------------------
     def get_density_matrix(self):
-        return self.rho
+        try:
+            return self.rho
+        except:
+            self._calculate_density_matrix()
+            return self.rho
+
 
     # ------------------------------------------------------------------
     def get_eigen_values(self):
@@ -287,7 +262,7 @@ class SparseExactDiagonalization(object):
             et_b = np.exp((t2[i]-t1[i])*E).flatten()[:,None]
             et_c = np.exp((t3[i]-t2[i])*E).flatten()[:,None]
             et_d = np.exp((-t3[i])*E).flatten()[:,None]
-            G[i]=(op1.multiply(et_a)*op2.multiply(et_b)*op3.multiply(et_c)*op4.multiply(et_d)).sum()
+            G[i]=(op1.multiply(et_a)*op2.multiply(et_b)*op3.multiply(et_c)*op4.multiply(et_d)).diagonal().sum()
 
         G /= self.Z
         return G
@@ -322,7 +297,7 @@ class SparseExactDiagonalization(object):
         # -- Compute Lehman sum for all operator combinations
         G = np.zeros((len(iwn)), dtype=np.complex)
         op=(op1_eig.getH().multiply(op2_eig)).tocoo()
-        M=(np.exp(-self.beta*self.E[op.row])+np.exp(-self.beta*self.E[op.col]))*op.data
+        M=(np.exp(-self.beta*self.E[op.row])-xi*np.exp(-self.beta*self.E[op.col]))*op.data
         E=(self.E[op.row]-self.E[op.col])
         bar = progressbar.ProgressBar()
         for i in bar(range(len(iwn))):
