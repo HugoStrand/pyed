@@ -19,6 +19,7 @@ from scipy.sparse.linalg import eigs as eigs_sparse
 from scipy.sparse.linalg import eigsh as eigsh_sparse
 from scipy.sparse import csr_matrix
 from scipy.sparse import diags
+from tqdm import tqdm
 # ----------------------------------------------------------------------
 
 from CubeTetras import CubeTetras
@@ -44,8 +45,8 @@ class SparseExactDiagonalization(object):
         self.U=csr_matrix(self.H.shape,dtype=np.float)
         self.E=np.zeros(self.H.shape[0])
         print 'Hamiltonian diagonalization:'
-        bar = progressbar.ProgressBar()
-        for i in bar(range(len(self.blocks))):
+        # bar = progressbar.ProgressBar()
+        for i in tqdm(range(len(self.blocks))):
             block=self.blocks[i]
             X,Y=np.meshgrid(block,block)
             E,U=np.linalg.eigh(self.H[X,Y].todense())
@@ -220,7 +221,7 @@ class SparseExactDiagonalization(object):
         dops = self._operators_to_eigenbasis(ops)
         op1, op2, op3 = dops
 
-        for i in range(len(G)):
+        for i in tqdm(range(len(G))):
             et_a = np.exp((-self.beta + t1[i])*E).flatten()[:,None]
             et_b = np.exp((t2[i]-t1[i])*E).flatten()[:,None]
             et_c = np.exp((-t2[i])*E).flatten()[:,None]
@@ -257,7 +258,7 @@ class SparseExactDiagonalization(object):
 
         dops = self._operators_to_eigenbasis(ops)
         op1, op2, op3, op4 = dops
-        for i in range(len(G)):
+        for i in tqdm(range(len(G))):
             et_a = np.exp((-self.beta + t1[i])*E).flatten()[:,None]
             et_b = np.exp((t2[i]-t1[i])*E).flatten()[:,None]
             et_c = np.exp((t3[i]-t2[i])*E).flatten()[:,None]
@@ -276,8 +277,8 @@ class SparseExactDiagonalization(object):
 
         G = np.zeros((len(tau)), dtype=np.complex)
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
-        bar = progressbar.ProgressBar()
-        for i in bar(range(len(tau))):
+        # bar = progressbar.ProgressBar()
+        for i in tqdm(range(len(tau))):
             et_p = np.exp((-self.beta +  tau[i])*self.E)[:,None]
             et_m = np.exp(- tau[i]*self.E)[:,None]
             G[i] = - (op1_eig.multiply(et_p)*op2_eig.multiply(et_m)).diagonal().sum()
@@ -299,8 +300,8 @@ class SparseExactDiagonalization(object):
         op=(op1_eig.getH().multiply(op2_eig)).tocoo()
         M=(np.exp(-self.beta*self.E[op.row])-xi*np.exp(-self.beta*self.E[op.col]))*op.data
         E=(self.E[op.row]-self.E[op.col])
-        bar = progressbar.ProgressBar()
-        for i in bar(range(len(iwn))):
+        # bar = progressbar.ProgressBar()
+        for i in tqdm(range(len(iwn))):
             G[i]=np.sum(M/(iwn[i]-E))
         G /= self.Z
 
@@ -391,8 +392,8 @@ class SparseExactDiagonalization(object):
         op=(op1_eig.getH().multiply(op2_eig)).tocoo()
         M=(np.exp(-self.beta*self.E[op.row])+np.exp(-self.beta*self.E[op.col]))*op.data
         E=(self.E[op.row]-self.E[op.col])
-        bar = progressbar.ProgressBar()
-        for i in bar(range(len(w))):
+        # bar = progressbar.ProgressBar()
+        for i in tqdm(range(len(w))):
             G[i]=np.sum(M/(w[i]+1j*eta-E))
         G /= self.Z
 
