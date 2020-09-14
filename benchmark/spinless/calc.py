@@ -73,7 +73,7 @@ if __name__ == '__main__':
                      indices=['A', 'B'])
 
     for (i1, s1), (i2, s2) in itertools.product([('A', up), ('B', do)], repeat=2):
-        print i1, s1, i2, s2
+        print(i1, s1, i2, s2)
         ed.set_g2_tau(g_tau[i1, i2], c(s1,0), c_dag(s2,0))
 
     # ------------------------------------------------------------------
