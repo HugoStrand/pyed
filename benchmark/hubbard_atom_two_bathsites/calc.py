@@ -11,12 +11,12 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from pytriqs.gf import Gf
-from pytriqs.gf import MeshImTime, MeshProduct
-from pytriqs.gf import GfImTime, GfImFreq
+from triqs.gf import Gf
+from triqs.gf import MeshImTime, MeshProduct
+from triqs.gf import GfImTime, GfImFreq
 
-from pytriqs.operators import c, c_dag
-from pytriqs.archive import HDFArchive
+from triqs.operators import c, c_dag
+from h5 import HDFArchive
 
 # ----------------------------------------------------------------------
 

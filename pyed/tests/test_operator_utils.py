@@ -11,10 +11,10 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from pytriqs.operators import n, c, c_dag, Operator, dagger
+from triqs.operators import n, c, c_dag, Operator, dagger
 
-from pytriqs.operators.util.U_matrix import U_matrix_kanamori, U_matrix
-from pytriqs.operators.util.hamiltonians import h_int_kanamori
+from triqs.operators.util.U_matrix import U_matrix_kanamori, U_matrix
+from triqs.operators.util.hamiltonians import h_int_kanamori
 
 from transform_kanamori import h_int_kanamori_transformed
 
