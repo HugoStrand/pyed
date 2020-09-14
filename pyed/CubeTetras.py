@@ -84,13 +84,13 @@ class CubeTetras(CubeTetrasBase):
     # ------------------------------------------------------------------
     def __iter__(self):
 
-        for tidx in xrange(6):
+        for tidx in range(6):
             
             func, perm, perm_sign = self.tetra_list[tidx]
     
             index = []
             for n1, n2, n3 in itertools.product(
-                    range(self.ntau), repeat=3):
+                    list(range(self.ntau)), repeat=3):
                 if func(n1, n2, n3): index.append((n1, n2, n3))
 
             index = np.array(index).T
@@ -122,8 +122,8 @@ class CubeTetrasMesh(CubeTetrasBase):
 
         """ for pytriqs three time greens functions """
 
-        tetra_idx = [ [] for n in xrange(6) ]
-        tetra_tau = [ [] for n in xrange(6) ]
+        tetra_idx = [ [] for n in range(6) ]
+        tetra_tau = [ [] for n in range(6) ]
 
         for idxs, taus in enumerate_tau3(self.g4_tau):
             
@@ -135,7 +135,7 @@ class CubeTetrasMesh(CubeTetrasBase):
                     tetra_tau[tidx] += [ taus ]
                     break
 
-        for tidx in xrange(6):
+        for tidx in range(6):
             func, perm, perm_sign = self.tetra_list[tidx]
 
             yield tetra_idx[tidx], tetra_tau[tidx], perm, perm_sign

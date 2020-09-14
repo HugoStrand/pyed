@@ -93,7 +93,7 @@ if __name__ == '__main__':
     subp = [1, 3, 1]
     
     # -- All slice planes
-    for i1, i2 in itertools.combinations(range(3), 2):
+    for i1, i2 in itertools.combinations(list(range(3)), 2):
 
         frac_cut = 3
         cut_idx = int(np.round(1./frac_cut * g4_tau.data.shape[0]))

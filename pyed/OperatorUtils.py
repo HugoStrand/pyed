@@ -128,7 +128,7 @@ def quartic_pauli_symmetrize(U):
     N = U.shape[0]
     assert( U.shape == tuple([N]*4) )
 
-    for n in xrange(N):
+    for n in range(N):
         U[n, n, :, :] = 0
         U[:, :, n, n] = 0
 
@@ -179,7 +179,7 @@ def quartic_tensor_from_operator(op, fundamental_operators,
         op_list, prefactor = term
         if len(op_list) == 4:
 
-            d, t = zip(*op_list) # split in two lists with daggers and tuples resp
+            d, t = list(zip(*op_list)) # split in two lists with daggers and tuples resp
             t = [tuple(x) for x in t]
 
             # check creation/annihilation order
@@ -217,7 +217,7 @@ def operator_from_quartic_tensor(h_quart, fundamental_operators):
     H = Operator(0.)
 
     for t in itertools.product(enumerate(fundamental_operators), repeat=4):
-        idx, ops = zip(*t)
+        idx, ops = list(zip(*t))
         o1, o2, o3, o4 = ops
         o1, o2 = dagger(o1), dagger(o2)
 
@@ -246,7 +246,7 @@ def operator_single_particle_transform(op, U, fundamental_operators):
         k = op_idx_map.index((s, i))
         
         ret = Operator()
-        for l in xrange(U.shape[0]):
+        for l in range(U.shape[0]):
             op_idx = op_idx_map[l]
             ret += U[k, l] * c(*op_idx)
 
@@ -271,7 +271,7 @@ def operator_single_particle_transform(op, U, fundamental_operators):
             if type(factor) is list:
                 for dag, idxs in factor:
                     tup = (dag, tuple(idxs))
-                    if tup in op_trans_dict.keys():
+                    if tup in list(op_trans_dict.keys()):
                         op_factor *= op_trans_dict[tup]
                     else:
                         op_factor *= {False:c, True:c_dag}[dag](*idxs)

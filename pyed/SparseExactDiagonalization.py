@@ -19,7 +19,7 @@ from scipy.sparse.linalg import eigsh as eigsh_sparse
 
 # ----------------------------------------------------------------------
 
-from CubeTetras import CubeTetras
+from .CubeTetras import CubeTetras
 
 # ----------------------------------------------------------------------
 class SparseExactDiagonalization(object):
@@ -59,7 +59,7 @@ class SparseExactDiagonalization(object):
                 self.E, self.U = eigsh_sparse(
                     self.H, k=self.nstates, which='SA',
                     v0=self.v0, tol=self.tol, ncv=self.nstates*8+1)
-                print 'ED:', time.time() - t, ' s'
+                print('ED:', time.time() - t, ' s')
             else:
                 self.E, self.U = eigs_sparse(
                     self.H, k=self.nstates, which='SR',
@@ -95,7 +95,7 @@ class SparseExactDiagonalization(object):
     def get_expectation_value_sparse(self, operator):
 
         exp_val = 0.0
-        for idx in xrange(self.E.size):
+        for idx in range(self.E.size):
             vec = self.U[:, idx]
             dot_prod = np.dot(vec.H, operator * vec)[0,0] # <n|O|n>
             exp_val += np.exp(-self.beta * self.E[idx]) * dot_prod
@@ -208,7 +208,7 @@ class SparseExactDiagonalization(object):
         for tidx, tetra in enumerate(CubeTetras(tau)):
             idx, taus, perm, perm_sign = tetra
 
-            print 'Tetra:', tidx
+            print('Tetra:', tidx)
             
             # do not permute the last operator
             ops_perm = ops[perm + [3]]
@@ -400,7 +400,7 @@ class SparseExactDiagonalization(object):
         ba, bc = op1, op2
 
         Hba = ba
-        for order in xrange(Norder):
+        for order in range(Norder):
             tail_op = xi_commutator(Hba, bc, xi)                
             Gc[order] = (-1.)**(order) * \
                         self.get_expectation_value(tail_op)

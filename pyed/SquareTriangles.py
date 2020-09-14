@@ -74,13 +74,13 @@ class SuqareTraingles(SquareTrianglesBase):
     # ------------------------------------------------------------------
     def __iter__(self):
 
-        for tidx in xrange(self.N):
+        for tidx in range(self.N):
             
             func, perm, perm_sign = self.triangle_list[tidx]
     
             index = []
             for n1, n2 in itertools.product(
-                    range(self.ntau), repeat=2):
+                    list(range(self.ntau)), repeat=2):
                 if func(n1, n2): index.append((n1, n2))
 
             index = np.array(index).T
@@ -112,8 +112,8 @@ class SquareTrianglesMesh(SquareTrianglesBase):
 
         """ for pytriqs three time greens functions """
 
-        triangle_idx = [ [] for n in xrange(self.N) ]
-        triangle_tau = [ [] for n in xrange(self.N) ]
+        triangle_idx = [ [] for n in range(self.N) ]
+        triangle_tau = [ [] for n in range(self.N) ]
 
         for idxs, taus in enumerate_tau2(self.g3_tau):
             
@@ -125,7 +125,7 @@ class SquareTrianglesMesh(SquareTrianglesBase):
                     triangle_tau[tidx] += [ taus ]
                     break
 
-        for tidx in xrange(self.N):
+        for tidx in range(self.N):
             func, perm, perm_sign = self.triangle_list[tidx]
 
             yield triangle_idx[tidx], triangle_tau[tidx], perm, perm_sign
