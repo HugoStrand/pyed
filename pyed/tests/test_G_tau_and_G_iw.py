@@ -17,7 +17,7 @@ from triqs.gf import MeshImTime, MeshImFreq
 from triqs.gf import GfImTime, GfImFreq
 from triqs.operators import c, c_dag
 
-from triqs.gf import inverse, iOmega_n, InverseFourier
+from triqs.gf import inverse, iOmega_n, Fourier
 
 # ----------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
     G_iw = GfImFreq(beta=beta, statistic='Fermion', n_points=niw, target_shape=(1,1))
 
     G_iw << inverse( iOmega_n - eps )
-    G_tau << InverseFourier(G_iw)
+    G_tau << Fourier(G_iw)
 
     G_tau_ed = GfImTime(beta=beta, statistic='Fermion', n_points=ntau, target_shape=(1,1))
     G_iw_ed = GfImFreq(beta=beta, statistic='Fermion', n_points=niw, target_shape=(1,1))
