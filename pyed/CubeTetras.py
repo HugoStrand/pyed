@@ -13,13 +13,13 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 def Idxs(integer_index_list):
-    from pytriqs.gf import Idx
+    from triqs.gf import Idx
     return tuple( Idx(i) for i in integer_index_list )
 
 # ----------------------------------------------------------------------
 def zero_outer_planes_and_equal_times(g4_tau):
 
-    from pytriqs.gf import Idx
+    from triqs.gf import Idx
     beta = g4_tau.mesh.components[0].beta
     
     for idxs, (t1, t2, t3) in enumerate_tau3(g4_tau):
@@ -32,7 +32,7 @@ def zero_outer_planes_and_equal_times(g4_tau):
 # ----------------------------------------------------------------------
 def enumerate_tau3(g4_tau, make_real=True, beta=None):
 
-    from pytriqs.gf import MeshImTime, MeshProduct
+    from triqs.gf import MeshImTime, MeshProduct
     
     assert( type(g4_tau.mesh) == MeshProduct )
 
@@ -120,7 +120,7 @@ class CubeTetrasMesh(CubeTetrasBase):
     # ------------------------------------------------------------------
     def __iter__(self):
 
-        """ for pytriqs three time greens functions """
+        """ for triqs three time greens functions """
 
         tetra_idx = [ [] for n in xrange(6) ]
         tetra_tau = [ [] for n in xrange(6) ]

@@ -11,13 +11,13 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from pytriqs.gf import Gf
-from pytriqs.gf import MeshImTime, MeshImFreq
+from triqs.gf import Gf
+from triqs.gf import MeshImTime, MeshImFreq
 
-from pytriqs.gf import GfImTime, GfImFreq
-from pytriqs.operators import c, c_dag
+from triqs.gf import GfImTime, GfImFreq
+from triqs.operators import c, c_dag
 
-from pytriqs.gf import inverse, iOmega_n, InverseFourier
+from triqs.gf import inverse, iOmega_n, InverseFourier
 
 # ----------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
     # ------------------------------------------------------------------
     # -- Compare gfs
 
-    from pytriqs.utility.comparison_tests import assert_gfs_are_close
+    from triqs.utility.comparison_tests import assert_gfs_are_close
     
     assert_gfs_are_close(G_tau, G_tau_ed)
     assert_gfs_are_close(G_iw, G_iw_ed)
@@ -65,7 +65,7 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
     # -- Plotting
     
     if verbose:
-        from pytriqs.plot.mpl_interface import oplot, plt
+        from triqs.plot.mpl_interface import oplot, plt
         subp = [3, 1, 1]
         plt.subplot(*subp); subp[-1] += 1
         oplot(G_tau.real)

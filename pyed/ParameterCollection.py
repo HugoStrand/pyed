@@ -51,7 +51,7 @@ class ParameterCollection(object):
                 self.dict()[key] = bool(value)
 
     def convert_keys_from_string_to_python(self, dict_key):
-        """ pytriqs.archive.HDFArchive incorrectly mangles tuple keys to string
+        """ triqs.archive.HDFArchive incorrectly mangles tuple keys to string
         running this on the affected dict tries to revert this by running eval
         on the string representation. UGLY FIX... """
 
@@ -107,5 +107,5 @@ class ParameterCollection(object):
 
 # -- Register ParameterCollection in Triqs hdf_archive_schemes
 
-from pytriqs.archive.hdf_archive_schemes import register_class 
+from triqs.archive.hdf_archive_schemes import register_class 
 register_class(ParameterCollection)

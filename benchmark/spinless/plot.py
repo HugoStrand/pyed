@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 
 # ----------------------------------------------------------------------
 
-from pytriqs.gf import Gf
-from pytriqs.archive import HDFArchive
-from pytriqs.plot.mpl_interface import oplotr
+from triqs.gf import Gf
+from triqs.archive import HDFArchive
+from triqs.plot.mpl_interface import oplotr
 
 # ----------------------------------------------------------------------
 if __name__ == '__main__':

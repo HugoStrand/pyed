@@ -4,7 +4,7 @@ Copyright (C) 2017, H. U.R. Strand
 
 The python module `pyed` implements exact diagonalization for finite fermionic many-body quantum systems, together with calculations of several response functions in imagianary time.
 
-The many-body system is defined using `pytriqs` second-quantized operators and the response functions are stored in `pytriqs` Green's function containters.
+The many-body system is defined using `triqs` second-quantized operators and the response functions are stored in `triqs` Green's function containters.
 
 The original purpose of `pyed` is to provide exact solutions to small finite systems, to be used as benchmarks and tests for stochastic many-body solvers.
 

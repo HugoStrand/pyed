@@ -25,7 +25,7 @@ def zero_outer_planes_and_equal_times(g3_tau):
 # ----------------------------------------------------------------------
 def enumerate_tau2(g3_tau, make_real=True, beta=None):
 
-    from pytriqs.gf import MeshImTime, MeshProduct
+    from triqs.gf import MeshImTime, MeshProduct
     
     assert( type(g3_tau.mesh) == MeshProduct )
 
@@ -110,7 +110,7 @@ class SquareTrianglesMesh(SquareTrianglesBase):
     # ------------------------------------------------------------------
     def __iter__(self):
 
-        """ for pytriqs three time greens functions """
+        """ for triqs three time greens functions """
 
         triangle_idx = [ [] for n in xrange(self.N) ]
         triangle_tau = [ [] for n in xrange(self.N) ]

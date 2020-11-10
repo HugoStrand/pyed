@@ -12,10 +12,10 @@ import numpy as np
 
 #----------------------------------------------------------------------
 
-from pytriqs.gf import Gf, GfImTime
-from pytriqs.gf import MeshImTime, MeshProduct
+from triqs.gf import Gf, GfImTime
+from triqs.gf import MeshImTime, MeshProduct
 
-from pytriqs.operators import c, c_dag
+from triqs.operators import c, c_dag
 
 #----------------------------------------------------------------------
 
