@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 # ----------------------------------------------------------------------
 
 from triqs.gf import Gf
-from triqs.archive import HDFArchive
+from h5 import HDFArchive
 #from triqs.plot.mpl_interface import oplot
 
 # ----------------------------------------------------------------------

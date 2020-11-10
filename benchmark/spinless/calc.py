@@ -19,7 +19,7 @@ from triqs.gf import MeshImTime, MeshProduct
 from triqs.gf import GfImTime, GfImFreq
 
 from triqs.operators import c, c_dag
-from triqs.archive import HDFArchive
+from h5 import HDFArchive
 
 # ----------------------------------------------------------------------
 
