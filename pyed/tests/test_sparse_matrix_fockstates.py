@@ -12,7 +12,7 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from pytriqs.operators import c, c_dag
+from triqs.operators import c, c_dag
 
 # ----------------------------------------------------------------------
 

@@ -12,9 +12,9 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from pytriqs.gf import MeshImTime, MeshProduct, Idx
-from pytriqs.operators import dagger
-from pytriqs.utility import mpi
+from triqs.gf import MeshImTime, MeshProduct, Idx
+from triqs.operators import dagger
+from triqs.utility import mpi
 
 # ----------------------------------------------------------------------
 

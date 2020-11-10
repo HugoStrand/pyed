@@ -9,8 +9,8 @@ Author: Gernot J. Kraberger (2016) """
 import numpy as np
 from itertools import product
 
-from pytriqs.operators.util import get_mkind
-from pytriqs.operators import c, c_dag, Operator, dagger
+from triqs.operators.util import get_mkind
+from triqs.operators import c, c_dag, Operator, dagger
 
 # ----------------------------------------------------------------------
 def h_int_kanamori_d(spin_names, orb_names, U, Uprime, J_hund,
