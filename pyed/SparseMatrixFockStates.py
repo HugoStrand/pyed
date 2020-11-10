@@ -86,7 +86,7 @@ class SparseMatrixRepresentation(object):
         from sympy.simplify.simplify import nsimplify
         
         d = dict([ ((i, j), nsimplify(val)) \
-                   for (i, j), val in Hsp.todok().iteritems() ])
+                   for (i, j), val in Hsp.todok().items() ])
         
         H = SparseMatrix(Hsp.shape[0], Hsp.shape[1], d)
 
@@ -105,7 +105,7 @@ class SparseMatrixCreationOperators:
         self.nstates = 2**nfermions
 
         self.c_dag = []
-        for fidx in xrange(nfermions):
+        for fidx in range(nfermions):
             c_dag_fidx = self._build_creation_operator(fidx)
             self.c_dag.append(c_dag_fidx)
 

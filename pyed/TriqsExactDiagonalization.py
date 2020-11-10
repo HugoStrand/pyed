@@ -130,7 +130,7 @@ class TriqsExactDiagonalization(object):
         raw_tail = self.ed.get_high_frequency_tail_coeff_component(
             op1_mat, op2_mat, self.xi(g.mesh), Norder=tail.order_max)
 
-        for idx in xrange(tail.order_max):
+        for idx in range(tail.order_max):
             tail[idx+1] = raw_tail[idx]
 
     # ------------------------------------------------------------------

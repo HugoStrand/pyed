@@ -48,7 +48,7 @@ def test_gf_struct():
         c('do', 2),
         ]
 
-    print fundamental_operators
+    print(fundamental_operators)
     assert( fundamental_operators == fundamental_operators_ref )
 
 # ----------------------------------------------------------------------
@@ -73,7 +73,7 @@ def test_quadratic():
     h_loc = np.random.random((n, n))
     h_loc = 0.5 * (h_loc + h_loc.T)
 
-    fund_op = [ c(0, idx) for idx in xrange(n) ]
+    fund_op = [ c(0, idx) for idx in range(n) ]
     H_loc = get_quadratic_operator(h_loc, fund_op)
     h_loc_ref = quadratic_matrix_from_operator(H_loc, fund_op)
     
@@ -83,7 +83,7 @@ def test_quadratic():
 def test_quartic(verbose=False):
 
     if verbose:
-        print '--> test_quartic'
+        print('--> test_quartic')
         
     num_orbitals = 2
     num_spins = 2
@@ -92,13 +92,13 @@ def test_quartic(verbose=False):
 
     up, do = 0, 1
     spin_names = [up, do]
-    orb_names = range(num_orbitals)
+    orb_names = list(range(num_orbitals))
     
     U_ab, UPrime_ab = U_matrix_kanamori(n_orb=2, U_int=U, J_hund=J)
 
     if verbose:
-        print 'U_ab =\n', U_ab
-        print 'UPrime_ab =\n', UPrime_ab
+        print('U_ab =\n', U_ab)
+        print('UPrime_ab =\n', UPrime_ab)
 
     T_ab = np.array([
         [1., 1.],
@@ -119,8 +119,8 @@ def test_quartic(verbose=False):
     Ht_int = operator_single_particle_transform(H_int, T_ab_spin, op_imp)
 
     if verbose:
-        print 'H_int =', H_int
-        print 'Ht_int =', Ht_int
+        print('H_int =', H_int)
+        print('Ht_int =', Ht_int)
 
     from transform_kanamori import h_int_kanamori_transformed
 
@@ -129,7 +129,7 @@ def test_quartic(verbose=False):
         off_diag=True, map_operator_structure=None, H_dump=None)
 
     if verbose:
-        print 'Ht_int_ref =', Ht_int_ref
+        print('Ht_int_ref =', Ht_int_ref)
     
     assert( (Ht_int_ref - Ht_int).is_zero() )
 
@@ -137,7 +137,7 @@ def test_quartic(verbose=False):
 def test_single_particle_transform(verbose=False):
 
     if verbose:
-        print '--> test_single_particle_transform'
+        print('--> test_single_particle_transform')
         
     h_loc = np.array([
         [1.0, 0.0],
@@ -155,9 +155,9 @@ def test_single_particle_transform(verbose=False):
     np.testing.assert_array_almost_equal(h_loc, h_loc_ref)
 
     if verbose:
-        print 'h_loc =\n', h_loc
-        print 'h_loc_ref =\n', h_loc_ref
-        print 'H_loc =', H_loc
+        print('h_loc =\n', h_loc)
+        print('h_loc_ref =\n', h_loc_ref)
+        print('H_loc =', H_loc)
 
     T_ab = np.array([
         [1., 1.],
@@ -175,10 +175,10 @@ def test_single_particle_transform(verbose=False):
     Ht_loc_ref = c_dag(0, 0) * c(0, 1) + c_dag(0, 1) * c(0, 0)
 
     if verbose:
-        print 'ht_loc =\n', ht_loc
-        print 'ht_loc_ref =\n', ht_loc_ref
-        print 'Ht_loc =', Ht_loc
-        print 'Ht_loc_ref =', Ht_loc_ref
+        print('ht_loc =\n', ht_loc)
+        print('ht_loc_ref =\n', ht_loc_ref)
+        print('Ht_loc =', Ht_loc)
+        print('Ht_loc_ref =', Ht_loc_ref)
     
     assert( (Ht_loc - Ht_loc_ref).is_zero() )
 
@@ -199,10 +199,10 @@ def test_quartic_tensor_from_operator(verbose=False):
     np.testing.assert_array_almost_equal(U_ref, U_sym)
 
     if verbose:
-        print '-'*72
+        print('-'*72)
         import itertools
-        for idxs in itertools.product(range(N), repeat=4):
-            print idxs, U_ref[idxs] - U_sym[idxs], U[idxs], U_ref[idxs], U_sym[idxs]
+        for idxs in itertools.product(list(range(N)), repeat=4):
+            print(idxs, U_ref[idxs] - U_sym[idxs], U[idxs], U_ref[idxs], U_sym[idxs])
 
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
