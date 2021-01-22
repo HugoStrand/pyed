@@ -10,19 +10,14 @@ The original purpose of `pyed` is to provide exact solutions to small finite sys
 
 ## Dependencies
 
-`pyed` requires [the `triqs` library](https://github.com/TRIQS/triqs) to be installed from the `unstable` banch or version `1.5` scheduled for release late 2017.
+`pyed` requires [the `triqs` library](https://github.com/TRIQS/triqs).
 
 ## Installation
 
-To do: Add `setup_utils` install script
-
-There is currently no formal installation scripts packed with `pyed`. To use and develop the module simply ammend your `PYTHON_PATH` with the `./pyed/` folder, e.g., add the follwing
-
+To install `pyed` using the python setuptools run
 ```
-export PYTHON_PATH=${HOME}/path/to/pyed:$PYTHON_PATH
+python setup.py install
 ```
-
-in your `.bashrc`, `.bash_profile`, or `.profile` file.
 
 ## Documentation
 
