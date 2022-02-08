@@ -110,7 +110,7 @@ class SparseMatrixCreationOperators:
             self.c_dag.append(c_dag_fidx)
 
         self.I = sparse.eye(
-            self.nstates, self.nstates, dtype=np.float, format='csr')
+            self.nstates, self.nstates, dtype=np.float64, format='csr')
             
     # ------------------------------------------------------------------
     def _build_creation_operator(self, orbidx):
