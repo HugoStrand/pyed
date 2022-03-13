@@ -1,5 +1,4 @@
-
-""" 
+"""
 Exact diagonalization and single- and two-particle Green's function calculator for Triqs operator expressions.
 
 Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
@@ -33,14 +32,14 @@ def mpi_op_comb(op_list, repeat=2):
 
 # ----------------------------------------------------------------------
 def mpi_all_reduce_g(g):
-    
+
     g << mpi.all_reduce(mpi.world, g, lambda x, y : x + y)
 
     return g
 
 # ----------------------------------------------------------------------
 class TriqsExactDiagonalization(object):
-    
+
     """ Exact diagonalization for Triqs operator expressions. """
 
     # ------------------------------------------------------------------
@@ -64,24 +63,24 @@ class TriqsExactDiagonalization(object):
         return self.ed.get_density_matrix()
     def get_ground_state_energy(self):
         return self.ed.get_ground_state_energy()
-        
+
     # ------------------------------------------------------------------
     def set_g2_tau(self, g_tau, op1, op2):
 
         assert( type(g_tau.mesh) == MeshImTime )
         assert( self.beta == g_tau.mesh.beta )
         assert( g_tau.target_shape == () )
-    
+
         op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
+        op2_mat = self.rep.sparse_matrix(op2)
 
         tau = np.array([tau.value for tau in g_tau.mesh])
- 
+
         g_tau.data[:] = self.ed.get_tau_greens_function_component(
                 tau, op1_mat, op2_mat)
 
         #self.set_tail(g_tau, op1_mat, op2_mat)
-        
+
     # ------------------------------------------------------------------
     def set_g2_tau_matrix(self, g_tau, op_list):
 
@@ -99,12 +98,12 @@ class TriqsExactDiagonalization(object):
 
         assert( self.beta == g_iwn.mesh.beta )
         assert( g_iwn.target_shape == () )
-    
+
         op1_mat = self.rep.sparse_matrix(op1)
-        op2_mat = self.rep.sparse_matrix(op2)        
+        op2_mat = self.rep.sparse_matrix(op2)
 
         iwn = np.array([iwn.value for iwn in g_iwn.mesh])
-        
+
         g_iwn.data[:] = self.ed.get_frequency_greens_function_component(
                 iwn, op1_mat, op2_mat, self.xi(g_iwn.mesh))
 
@@ -114,14 +113,14 @@ class TriqsExactDiagonalization(object):
     def set_g2_iwn_matrix(self, g_iwn, op_list):
 
         assert( g_iwn.target_shape == tuple([len(op_list)]*2) )
-        
+
         for (i1, o1), (i2, o2) in mpi_op_comb(op_list, repeat=2):
             self.set_g2_iwn(g_iwn[i1, i2], o1, dagger(o2))
 
         g_iw = mpi_all_reduce_g(g_iwn)
-        
+
         return g_iwn
-        
+
     # ------------------------------------------------------------------
     def set_tail(self, g, op1_mat, op2_mat):
 
@@ -141,7 +140,7 @@ class TriqsExactDiagonalization(object):
 
     # ------------------------------------------------------------------
     def set_g3_tau(self, g3_tau, op1, op2, op3):
-        
+
         assert( g3_tau.target_shape == () )
 
         ops = [op1, op2, op3]
@@ -171,12 +170,12 @@ class TriqsExactDiagonalization(object):
             n, t = np.divmod(t, beta)
             s = 2.*(n % 2) - 1.
             return s * g(t)
-        
+
         for t1, t2, t3 in g40_tau.mesh:
 
             t12 = t1 - t2
             t32 = t3 - t2
-            
+
             #g40_tau[t1, t2, t3] = g_tau(t1-t2) * g_tau(t3.value) - g_tau(t1.value) * g_tau(t3-t2)
             g40_tau[t1, t2, t3] = val(g_tau, t12) * val(g_tau, t3) - val(g_tau, t1) *  val(g_tau, t32)
 
@@ -193,14 +192,14 @@ class TriqsExactDiagonalization(object):
             n, t = np.divmod(t, beta)
             s = 2.*(n % 2) - 1.
             return s * g(t)
-        
+
         for t1, t2, t3 in g40_tau.mesh:
             g40_tau[t1, t2, t3] *= 0.
             #g40_tau[t1, t2, t3] += np.einsum('ba,dc->abcd', g_tau(t1-t2), g_tau(t3.value))
             #g40_tau[t1, t2, t3] -= np.einsum('da,bc->abcd', g_tau(t1.value), g_tau(t3-t2))
             g40_tau[t1, t2, t3] += np.einsum('ba,dc->abcd', val(g_tau, t1-t2), val(g_tau, t3))
             g40_tau[t1, t2, t3] -= np.einsum('da,bc->abcd', val(g_tau, t1), val(g_tau, t3-t2))
-    
+
     # ------------------------------------------------------------------
     def set_g4_tau(self, g4_tau, op1, op2, op3, op4):
 
@@ -222,7 +221,7 @@ class TriqsExactDiagonalization(object):
 
     # ------------------------------------------------------------------
     def set_g4_tau_matrix(self, g4_tau, op_list):
-        
+
         assert( g4_tau.target_shape == tuple([len(op_list)]*4) )
 
         for (i1, o1), (i2, o2), (i3, o3), (i4, o4) in \
@@ -231,7 +230,7 @@ class TriqsExactDiagonalization(object):
             self.set_g4_tau(g4_tau[i1, i2, i3, i4], o1, dagger(o2), o3, dagger(o4))
 
         g4_tau = mpi_all_reduce_g(g4_tau)
-        
+
         return g4_tau
-   
+
 # ----------------------------------------------------------------------

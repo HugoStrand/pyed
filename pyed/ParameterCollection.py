@@ -31,7 +31,7 @@ class ParameterCollection(object):
         return list(self.__dict__.items())
 
     def keys(self):
-   	return list(self.__dict__.keys())
+        return list(self.__dict__.keys())
 
     def dict(self):
         return self.__dict__
@@ -43,9 +43,9 @@ class ParameterCollection(object):
         return self.__dict__
 
     def _clean_bools(self):
-        """ Fix for bug in Triqs that cast bool to numpy.bool_ 
+        """ Fix for bug in Triqs that cast bool to numpy.bool_
         here we cast all numpy.bools_ to plain python bools """
-        
+
         for key, value in list(self.items()):
             if type(value) == np.bool_:
                 self.dict()[key] = bool(value)
@@ -58,9 +58,9 @@ class ParameterCollection(object):
         d = self.dict()[dict_key]
         d_fix = {}
         for key, value in list(d.items()):
-            d_fix[eval(key)] = value            
+            d_fix[eval(key)] = value
         self.dict()[dict_key] = d_fix
-    
+
     def grab_attribs(self, obj, keys):
         for key in keys:
             val = getattr(obj, key)
@@ -90,7 +90,7 @@ class ParameterCollection(object):
                 max_lines = 10
                 if len(str_value_lines) > max_lines:
                     str_value = '\n'.join(str_value_lines[:max_lines] + ['...'])
-                
+
                 out += ''.join([key, ' = ', str_value]) + '\n'
         return out
 
@@ -107,5 +107,5 @@ class ParameterCollection(object):
 
 # -- Register ParameterCollection in Triqs formats
 
-from h5.formats import register_class 
+from h5.formats import register_class
 register_class(ParameterCollection)

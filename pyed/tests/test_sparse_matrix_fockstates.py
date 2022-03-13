@@ -1,9 +1,8 @@
-
-""" 
-Tests for conversion from Triqs expression to 
+"""
+Tests for conversion from Triqs expression to
 sparse matrix representation.
 
-Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com 
+Author: Hugo U. R. Strand (2017), hugo.strand@gmail.com
 """
 
 # ----------------------------------------------------------------------
@@ -29,13 +28,13 @@ def compare_sparse_matrices(A, B):
     np.testing.assert_array_almost_equal(A.data, B.data)
     np.testing.assert_array_almost_equal(A.row, B.row)
     np.testing.assert_array_almost_equal(A.col, B.col)
-    
+
 # ----------------------------------------------------------------------
 def test_sparse_matrix_representation():
-    
+
     up, do = 0, 1
     fundamental_operators = [c(up,0), c(do,0)]
-    
+
     rep = SparseMatrixRepresentation(fundamental_operators)
 
     # -- Test an operator
@@ -61,7 +60,7 @@ def test_trimer_hamiltonian():
 
     # ------------------------------------------------------------------
     # -- Hubbard atom with two bath sites, Hamiltonian
-    
+
     beta = 2.0
     V1 = 2.0
     V2 = 5.0
@@ -71,7 +70,7 @@ def test_trimer_hamiltonian():
     U = 1.0
 
     # -- construction using triqs operators
-    
+
     up, do = 0, 1
     docc = c_dag(up,0) * c(up,0) * c_dag(do,0) * c(do,0)
     nA = c_dag(up,0) * c(up,0) + c_dag(do,0) * c(do,0)
@@ -82,15 +81,15 @@ def test_trimer_hamiltonian():
         V1 * (c_dag(up,0)*c(up,1) + c_dag(up,1)*c(up,0) + \
               c_dag(do,0)*c(do,1) + c_dag(do,1)*c(do,0) ) + \
         V2 * (c_dag(up,0)*c(up,2) + c_dag(up,2)*c(up,0) + \
-              c_dag(do,0)*c(do,2) + c_dag(do,2)*c(do,0) )    
+              c_dag(do,0)*c(do,2) + c_dag(do,2)*c(do,0) )
 
     # ------------------------------------------------------------------
     fundamental_operators = [
         c(up,0), c(do,0), c(up,1), c(do,1), c(up,2), c(do,2)]
-    
+
     rep = SparseMatrixRepresentation(fundamental_operators)
     H_mat = rep.sparse_matrix(H_expr)
-    
+
     # -- explicit construction
 
     class Dummy(object):
@@ -101,7 +100,7 @@ def test_trimer_hamiltonian():
     op.cdagger = rep.sparse_operators.c_dag
     op.c = np.array([cdag.getH() for cdag in op.cdagger])
     op.n = np.array([ cdag*cop for cop, cdag in zip(op.c, op.cdagger)])
-    
+
     H_ref = -mu * (op.n[0] + op.n[1]) + \
         epsilon1 * (op.n[2] + op.n[3]) + \
         epsilon2 * (op.n[4] + op.n[5]) + \
@@ -109,13 +108,13 @@ def test_trimer_hamiltonian():
         V1 * (op.cdagger[0] * op.c[2] + op.cdagger[2] * op.c[0] + \
               op.cdagger[1] * op.c[3] + op.cdagger[3] * op.c[1] ) + \
         V2 * (op.cdagger[0] * op.c[4] + op.cdagger[4] * op.c[0] + \
-              op.cdagger[1] * op.c[5] + op.cdagger[5] * op.c[1] )    
+              op.cdagger[1] * op.c[5] + op.cdagger[5] * op.c[1] )
 
     # ------------------------------------------------------------------
     # -- compare
 
     compare_sparse_matrices(H_mat, H_ref)
-    
+
 #----------------------------------------------------------------------
 if __name__ == '__main__':
 

@@ -21,7 +21,6 @@ if __name__ == '__main__':
 
     with HDFArchive('spinless.ed.h5', 'r') as res:
         oplotr(res['tot'], name='ed')
-        
+
     plt.savefig('figure_ed_vs_pyed.pdf')
     plt.show()
-        

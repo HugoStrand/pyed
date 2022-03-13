@@ -1,9 +1,8 @@
-  
 """ Tests for OperatorUtils
 
 Author: Hugo U.R. Strand (2017) hugo.strand@gmail.com
 
- """ 
+ """
 
 # ----------------------------------------------------------------------
 
@@ -36,15 +35,15 @@ def test_gf_struct():
     orb_idxs = [0, 1, 2]
     spin_idxs = ['up', 'do']
     gf_struct = [ [spin_idx, orb_idxs] for spin_idx in spin_idxs ]
-    
+
     fundamental_operators = fundamental_operators_from_gf_struct(gf_struct)
 
     fundamental_operators_ref = [
-        c('up', 0), 
-        c('up', 1), 
-        c('up', 2), 
-        c('do', 0), 
-        c('do', 1), 
+        c('up', 0),
+        c('up', 1),
+        c('up', 2),
+        c('do', 0),
+        c('do', 1),
         c('do', 2),
         ]
 
@@ -69,14 +68,14 @@ def test_fundamental():
 def test_quadratic():
 
     n = 10
-    
+
     h_loc = np.random.random((n, n))
     h_loc = 0.5 * (h_loc + h_loc.T)
 
     fund_op = [ c(0, idx) for idx in range(n) ]
     H_loc = get_quadratic_operator(h_loc, fund_op)
     h_loc_ref = quadratic_matrix_from_operator(H_loc, fund_op)
-    
+
     np.testing.assert_array_almost_equal(h_loc, h_loc_ref)
 
 # ----------------------------------------------------------------------
@@ -84,7 +83,7 @@ def test_quartic(verbose=False):
 
     if verbose:
         print('--> test_quartic')
-        
+
     num_orbitals = 2
     num_spins = 2
 
@@ -93,7 +92,7 @@ def test_quartic(verbose=False):
     up, do = 0, 1
     spin_names = [up, do]
     orb_names = list(range(num_orbitals))
-    
+
     U_ab, UPrime_ab = U_matrix_kanamori(n_orb=2, U_int=U, J_hund=J)
 
     if verbose:
@@ -107,10 +106,10 @@ def test_quartic(verbose=False):
 
     # -- Check hermitian
     np.testing.assert_array_almost_equal(np.mat(T_ab) * np.mat(T_ab).H, np.eye(2))
-    
+
     I = np.eye(num_spins)
     T_ab_spin = np.kron(T_ab, I)
-    
+
     H_int = h_int_kanamori(
         spin_names, orb_names, U_ab, UPrime_ab, J_hund=J,
         off_diag=True, map_operator_structure=None, H_dump=None)
@@ -130,7 +129,7 @@ def test_quartic(verbose=False):
 
     if verbose:
         print('Ht_int_ref =', Ht_int_ref)
-    
+
     assert( (Ht_int_ref - Ht_int).is_zero() )
 
 # ----------------------------------------------------------------------
@@ -138,7 +137,7 @@ def test_single_particle_transform(verbose=False):
 
     if verbose:
         print('--> test_single_particle_transform')
-        
+
     h_loc = np.array([
         [1.0, 0.0],
         [0.0, -1.0],
@@ -179,7 +178,7 @@ def test_single_particle_transform(verbose=False):
         print('ht_loc_ref =\n', ht_loc_ref)
         print('Ht_loc =', Ht_loc)
         print('Ht_loc_ref =', Ht_loc_ref)
-    
+
     assert( (Ht_loc - Ht_loc_ref).is_zero() )
 
 # ----------------------------------------------------------------------
@@ -189,10 +188,10 @@ def test_quartic_tensor_from_operator(verbose=False):
     N = 3
     fundamental_operators = [ c(0, x) for x in range(N) ]
     shape = (N, N, N, N)
-    
+
     U = np.random.random(shape) + 1.j * np.random.random(shape)
     U_sym = symmetrize_quartic_tensor(U)
-    
+
     H = operator_from_quartic_tensor(U, fundamental_operators)
     U_ref = quartic_tensor_from_operator(H, fundamental_operators, perm_sym=True)
 

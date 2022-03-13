@@ -17,7 +17,7 @@ from h5 import HDFArchive
 # ----------------------------------------------------------------------
 
 from pyed.CubeTetras import zero_outer_planes_and_equal_times
-            
+
 # ----------------------------------------------------------------------
 def hack_label_separation(ax, fontsize=6, pad=-2):
     for ticks in [ax.xaxis.get_major_ticks(),
@@ -36,15 +36,15 @@ def plot_2d_g(ax, g2_tau, **kwargs):
     #X, Y = np.meshgrid(x, x)
     t1, t2 = np.meshgrid(tau, tau)
     ax.plot_wireframe(t1, t2, data.real, **kwargs)
-    
+
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
-    
+
     A = HDFArchive('data_ed.h5', 'r')
 
     # ------------------------------------------------------------------
     # -- Single-particle Green's function
-    
+
     g_tau = A['G_tau']
     tau = np.array([tau.value for tau in g_tau.mesh])
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     plt.tight_layout()
     #oplot(g_tau)
     plt.savefig('figure_g_tau.pdf')
-    
+
     # ------------------------------------------------------------------
     # -- Two-particle Green's function at equal times
 
@@ -72,13 +72,13 @@ if __name__ == '__main__':
     ax.set_ylabel(r'$\tau_2$', labelpad=-8)
     #ax.set_zlabel(r'$G(\tau_1, \tau_2, \tau_3)$', labelpad=-8)
     ax.set_title(r'$G^{(4)}(\tau_1, \tau_2, 0^+)$', loc='left', fontdict=dict(fontsize=10))
- 
+
     #ax.set_zlim([-0.15, 0.15])
     #ax.set_zlim([-0.09, 0.09])
 
     hack_label_separation(ax, fontsize=6, pad=-2)
     plt.tight_layout()
-    plt.savefig('figure_g3pp_tau.pdf')    
+    plt.savefig('figure_g3pp_tau.pdf')
 
     # ------------------------------------------------------------------
     # -- Two-particle Green's function
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     fig = plt.figure(figsize=(3.25*2, 2.5))
     subp = [1, 3, 1]
-    
+
     # -- All slice planes
     for i1, i2 in itertools.combinations(list(range(3)), 2):
 
@@ -102,8 +102,8 @@ if __name__ == '__main__':
         time_labels = [r'$\tau_1$', r'$\tau_2$', r'$\tau_3$']
         xlabel, ylabel = time_labels[i1], time_labels[i2]
         title = time_labels[list(set(range(3)).difference(set([i1, i2])))[0]] + r'$=\beta/%i$' % frac_cut
-        
-        
+
+
         ax = fig.add_subplot(*subp, projection='3d')
         subp[-1] += 1
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
         ax.set_ylabel(ylabel, labelpad=-8)
         #ax.set_zlabel(r'$G(\tau_1, \tau_2, \tau_3)$', labelpad=-8)
         ax.set_title(title, loc='left', fontdict=dict(fontsize=10))
- 
+
         #ax.set_zlim([-0.15, 0.15])
         ax.set_zlim([-0.09, 0.09])
 
@@ -128,5 +128,5 @@ if __name__ == '__main__':
     plt.savefig('figure_g2_tau.pdf')
 
     #plt.show()
-    
+
 # ----------------------------------------------------------------------

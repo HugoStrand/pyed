@@ -1,9 +1,8 @@
-  
 """ Test calculation for Hubbard atom with two bath sites.
 
 Author: Hugo U.R. Strand (2017) hugo.strand@gmail.com
 
- """ 
+ """
 
 # ----------------------------------------------------------------------
 
@@ -24,10 +23,10 @@ from pyed.TriqsExactDiagonalization import TriqsExactDiagonalization
 
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
-    
+
     # ------------------------------------------------------------------
     # -- Hubbard atom with two bath sites, Hamiltonian
-    
+
     beta = 2.0
     V1 = 2.0
     V2 = 5.0
@@ -47,13 +46,13 @@ if __name__ == '__main__':
               c_dag(do,0)*c(do,1) + c_dag(do,1)*c(do,0) ) + \
         V2 * (c_dag(up,0)*c(up,2) + c_dag(up,2)*c(up,0) + \
               c_dag(do,0)*c(do,2) + c_dag(do,2)*c(do,0) )
-    
+
     # ------------------------------------------------------------------
     # -- Exact diagonalization
 
     fundamental_operators = [
         c(up,0), c(do,0), c(up,1), c(do,1), c(up,2), c(do,2)]
-    
+
     ed = TriqsExactDiagonalization(H, fundamental_operators, beta)
 
     # ------------------------------------------------------------------
@@ -66,13 +65,13 @@ if __name__ == '__main__':
     g_iwn = GfImFreq(name='$g$', beta=beta,
                      statistic='Fermion', n_points=10,
                      target_shape=(1,1))
-    
+
     ed.set_g2_tau(g_tau[0,0], c(up,0), c_dag(up,0))
     ed.set_g2_iwn(g_iwn[0,0], c(up,0), c_dag(up,0))
 
     # ------------------------------------------------------------------
     # -- Two particle Green's functions
-    
+
     ntau = 20
     imtime = MeshImTime(beta, 'Fermion', ntau)
     prodmesh = MeshProduct(imtime, imtime, imtime)
@@ -92,15 +91,15 @@ if __name__ == '__main__':
 
     # ------------------------------------------------------------------
     # -- Store to hdf5
-    
+
     with HDFArchive('data_ed.h5','w') as res:
-                
+
         res["G_tau"] = g_tau
         res["G_iw"] = g_iwn
-        
+
         res["G20_tau"] = g40_tau
         res["G2_tau"] = g4_tau
 
         res["G3pp_tau"] = g3pp_tau
-        
+
 # ----------------------------------------------------------------------

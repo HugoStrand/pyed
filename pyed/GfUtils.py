@@ -1,5 +1,4 @@
-
-""" 
+"""
 Triqs Green's function utilities
 
 Author: Hugo U. R. Strand (2018), hugo.strand@gmail.com
@@ -19,7 +18,7 @@ def g2_single_particle_transform(g2, T):
     g2t.from_L_G_R(T, g2, T.H)
 
     return g2t
-    
+
 # ----------------------------------------------------------------------
 def g4_single_particle_transform(g4, T):
 
@@ -31,4 +30,3 @@ def g4_single_particle_transform(g4, T):
         T, T.conjugate(), T, T.conjugate(), g4.data)
 
     return g4t
-    

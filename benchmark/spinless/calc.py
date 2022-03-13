@@ -1,11 +1,10 @@
-  
 """ Test calculation for Hubbard atom with two bath sites.
 
 Using parameters of cthyb benchmark "spinless" with hybridization of spins...
 
 Author: Hugo U.R. Strand (2017) hugo.strand@gmail.com
 
- """ 
+ """
 
 # ----------------------------------------------------------------------
 
@@ -27,10 +26,10 @@ from pyed.TriqsExactDiagonalization import TriqsExactDiagonalization
 
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
-    
+
     # ------------------------------------------------------------------
     # -- Hubbard atom with two bath sites, Hamiltonian
-    
+
     beta = 10.0
     V1 = 1.0
     V2 = 1.0
@@ -56,13 +55,13 @@ if __name__ == '__main__':
         V2 * (c_dag(up,0)*c(up,2) + c_dag(up,2)*c(up,0) + \
               c_dag(do,0)*c(do,2) + c_dag(do,2)*c(do,0) ) + \
         -t * (hopA + hopB + hopC)
-    
+
     # ------------------------------------------------------------------
     # -- Exact diagonalization
 
     fundamental_operators = [
         c(up,0), c(do,0), c(up,1), c(do,1), c(up,2), c(do,2)]
-    
+
     ed = TriqsExactDiagonalization(H, fundamental_operators, beta)
 
     # ------------------------------------------------------------------
@@ -78,8 +77,8 @@ if __name__ == '__main__':
 
     # ------------------------------------------------------------------
     # -- Store to hdf5
-    
+
     with HDFArchive('data_ed.h5','w') as res:
         res['tot'] = g_tau
-        
+
 # ----------------------------------------------------------------------

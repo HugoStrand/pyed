@@ -1,9 +1,8 @@
-  
 """ Test calculation for Hubbard atom with two bath sites.
 
 Author: Hugo U.R. Strand (2017) hugo.strand@gmail.com
 
- """ 
+ """
 
 # ----------------------------------------------------------------------
 
@@ -31,7 +30,7 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
 
     niw = 64
     ntau = 2 * niw + 1
-    
+
     H = eps * c_dag(0,0) * c(0,0)
 
     fundamental_operators = [c(0,0)]
@@ -57,13 +56,13 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
     # -- Compare gfs
 
     from triqs.utility.comparison_tests import assert_gfs_are_close
-    
+
     assert_gfs_are_close(G_tau, G_tau_ed)
     assert_gfs_are_close(G_iw, G_iw_ed)
-    
+
     # ------------------------------------------------------------------
     # -- Plotting
-    
+
     if verbose:
         from triqs.plot.mpl_interface import oplot, plt
         subp = [3, 1, 1]
@@ -75,14 +74,14 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
         diff = G_tau - G_tau_ed
         oplot(diff.real)
         oplot(diff.imag)
-        
+
         plt.subplot(*subp); subp[-1] += 1
         oplot(G_iw)
         oplot(G_iw_ed)
-        
+
         plt.show()
 
 # ----------------------------------------------------------------------
 if __name__ == '__main__':
-    
+
     test_cf_G_tau_and_G_iw_nonint(verbose=True)
