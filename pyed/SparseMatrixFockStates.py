@@ -13,12 +13,14 @@ import numpy as np
 from scipy import sparse
 
 # ----------------------------------------------------------------------
+
+
 class SparseMatrixRepresentation(object):
 
-    """ Generator for sparse matrix representations of 
-    Triqs operator expressions, given a set of fundamental 
+    """ Generator for sparse matrix representations of
+    Triqs operator expressions, given a set of fundamental
     creation operators. """
-    
+
     # ------------------------------------------------------------------
     def __init__(self, fundamental_operators):
 
@@ -27,11 +29,12 @@ class SparseMatrixRepresentation(object):
         self.operator_labels = []
         for operator_expression in fundamental_operators:
             for term, coeff in operator_expression:
-                assert( coeff == 1 )
-                assert( len(term) == 1 )
+                assert(coeff == 1)
+                assert(len(term) == 1)
                 label = term[0]
                 dag, idx = label
-                label = (False, tuple(idx)) # only store annihilation operators
+                # only store annihilation operators
+                label = (False, tuple(idx))
                 self.operator_labels.append(label)
 
         # remove operator repetitions
@@ -43,9 +46,9 @@ class SparseMatrixRepresentation(object):
 
         assert len(operator_labels_set) == len(self.operator_labels), \
             "ERROR: Repeated operators in fundamental_operators!"
-        
+
         self.operator_labels = [
-            (dag, list(idx)) for dag, idx in self.operator_labels ]
+            (dag, list(idx)) for dag, idx in self.operator_labels]
 
         self.nfermions = len(self.operator_labels)
         self.sparse_operators = \
@@ -53,28 +56,28 @@ class SparseMatrixRepresentation(object):
 
     # ------------------------------------------------------------------
     def sparse_matrix(self, triqs_operator_expression):
-
         """ Convert a general Triqs operator expression to a sparse
         matrix representation. """
-        
+
         matrix_rep = 0.0 * self.sparse_operators.I
-    
+
         for term, coef in triqs_operator_expression:
 
             product = coef * self.sparse_operators.I
-            
+
             for fact in term:
 
                 dagger, idx = fact
                 oidx = self.operator_labels.index((False, idx))
 
                 op = self.sparse_operators.c_dag[oidx]
-                if not dagger: op = op.getH()                
+                if not dagger:
+                    op = op.getH()
 
                 product = product * op
 
             matrix_rep = matrix_rep + product
-            
+
         return matrix_rep
 
     # ------------------------------------------------------------------
@@ -84,20 +87,22 @@ class SparseMatrixRepresentation(object):
 
         from sympy.matrices import SparseMatrix
         from sympy.simplify.simplify import nsimplify
-        
-        d = dict([ ((i, j), nsimplify(val)) \
-                   for (i, j), val in Hsp.todok().items() ])
-        
+
+        d = dict([((i, j), nsimplify(val))
+                  for (i, j), val in Hsp.todok().items()])
+
         H = SparseMatrix(Hsp.shape[0], Hsp.shape[1], d)
 
         return H
-    
+
 # ----------------------------------------------------------------------
+
+
 class SparseMatrixCreationOperators:
 
-    """ Generator of sparse matrix representation of fermionic 
+    """ Generator of sparse matrix representation of fermionic
     creation operators, for finite number of fermions. """
-    
+
     # ------------------------------------------------------------------
     def __init__(self, nfermions):
 
@@ -111,7 +116,7 @@ class SparseMatrixCreationOperators:
 
         self.I = sparse.eye(
             self.nstates, self.nstates, dtype=np.float64, format='csr')
-            
+
     # ------------------------------------------------------------------
     def _build_creation_operator(self, orbidx):
         nstates = self.nstates
@@ -130,8 +135,8 @@ class SparseMatrixCreationOperators:
         states_new[:, -1 - orbidx] = 1
 
         # -- collect sign
-        sign = 1 - 2*np.array(
-            np.mod(np.sum(rightstates[:, 1:], axis=1), 2), 
+        sign = 1 - 2 * np.array(
+            np.mod(np.sum(rightstates[:, 1:], axis=1), 2),
             dtype=np.float64)
 
         # -- Transform back to uint16
@@ -146,10 +151,9 @@ class SparseMatrixCreationOperators:
         D = sign[idx]
 
         # -- Build sparse matrix repr.
-        cdagger = sparse.coo_matrix((D,(I,J)), \
-            shape=(nstates, nstates)).tocsr()
+        cdagger = sparse.coo_matrix((D, (I, J)),
+                                    shape=(nstates, nstates)).tocsr()
 
         return cdagger
 
 # ----------------------------------------------------------------------
-    

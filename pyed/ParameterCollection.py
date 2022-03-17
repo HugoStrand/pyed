@@ -1,4 +1,4 @@
-################################################################################
+##########################################################################
 #
 # TRIQS: a Toolbox for Research in Interacting Quantum Systems
 #
@@ -17,10 +17,12 @@
 # You should have received a copy of the GNU General Public License along with
 # TRIQS. If not, see <http://www.gnu.org/licenses/>.
 #
-################################################################################
+##########################################################################
 
+from h5.formats import register_class
 import inspect
 import numpy as np
+
 
 class ParameterCollection(object):
 
@@ -31,7 +33,7 @@ class ParameterCollection(object):
         return list(self.__dict__.items())
 
     def keys(self):
-   	return list(self.__dict__.keys())
+        return list(self.__dict__.keys())
 
     def dict(self):
         return self.__dict__
@@ -43,11 +45,11 @@ class ParameterCollection(object):
         return self.__dict__
 
     def _clean_bools(self):
-        """ Fix for bug in Triqs that cast bool to numpy.bool_ 
+        """ Fix for bug in Triqs that cast bool to numpy.bool_
         here we cast all numpy.bools_ to plain python bools """
-        
+
         for key, value in list(self.items()):
-            if type(value) == np.bool_:
+            if isinstance(value, np.bool_):
                 self.dict()[key] = bool(value)
 
     def convert_keys_from_string_to_python(self, dict_key):
@@ -58,9 +60,9 @@ class ParameterCollection(object):
         d = self.dict()[dict_key]
         d_fix = {}
         for key, value in list(d.items()):
-            d_fix[eval(key)] = value            
+            d_fix[eval(key)] = value
         self.dict()[dict_key] = d_fix
-    
+
     def grab_attribs(self, obj, keys):
         for key in keys:
             val = getattr(obj, key)
@@ -75,12 +77,12 @@ class ParameterCollection(object):
 
     def __str__(self):
         out = ''
-        keys = np.sort(list(self.__dict__.keys())) # sort keys
+        keys = np.sort(list(self.__dict__.keys()))  # sort keys
         for key in keys:
             value = self.__dict__[key]
-            if type(value) is ParameterCollection:
+            if isinstance(value, ParameterCollection):
                 pc_list = str(value).splitlines()
-                pc_txt = ''.join([ key + '.' + row + '\n' for row in pc_list ])
+                pc_txt = ''.join([key + '.' + row + '\n' for row in pc_list])
                 out += pc_txt
             else:
                 str_value = str(value)
@@ -89,15 +91,20 @@ class ParameterCollection(object):
                 str_value_lines = str_value.splitlines()
                 max_lines = 10
                 if len(str_value_lines) > max_lines:
-                    str_value = '\n'.join(str_value_lines[:max_lines] + ['...'])
-                
+                    str_value = '\n'.join(
+                        str_value_lines[:max_lines] + ['...'])
+
                 out += ''.join([key, ' = ', str_value]) + '\n'
         return out
 
     def get_my_name(self):
         ans = []
         frame = inspect.currentframe().f_back
-        tmp = dict(list(frame.f_globals.items()) + list(frame.f_locals.items()))
+        tmp = dict(
+            list(
+                frame.f_globals.items()) +
+            list(
+                frame.f_locals.items()))
         for k, var in list(tmp.items()):
             if isinstance(var, self.__class__):
                 if hash(self) == hash(var):
@@ -107,5 +114,4 @@ class ParameterCollection(object):
 
 # -- Register ParameterCollection in Triqs formats
 
-from h5.formats import register_class 
 register_class(ParameterCollection)
