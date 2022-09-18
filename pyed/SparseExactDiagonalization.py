@@ -67,7 +67,6 @@ class SparseExactDiagonalization(object):
                     self.H, k=self.nstates, which='SR',
                     v0=self.v0, tol=self.tol)
 
-        self.U = np.mat(self.U)
         self.E0 = np.min(self.E)
         self.E = self.E - self.E0
 
@@ -88,7 +87,7 @@ class SparseExactDiagonalization(object):
 
         dop_vec = []
         for op in op_vec:
-            dop = np.mat(self.U).H * op.todense() * np.mat(self.U)
+            dop =self.U.T.conjugate() @ op.todense() @ self.U
             dop_vec.append(dop)
 
         return dop_vec
@@ -161,7 +160,7 @@ class SparseExactDiagonalization(object):
         g = g.real
 
         N = len(tau)
-        G4 = np.zeros((N, N, N), dtype=np.complex)
+        G4 = np.zeros((N, N, N), dtype=complex)
 
         def gint(t):
             sign = 1.0
@@ -185,7 +184,7 @@ class SparseExactDiagonalization(object):
         g = g.real
 
         N = len(tau)
-        G4 = np.zeros((N, N, N), dtype=np.complex)
+        G4 = np.zeros((N, N, N), dtype=complex)
 
         def gint(t_in):
             t = np.copy(t_in)
@@ -204,7 +203,7 @@ class SparseExactDiagonalization(object):
     def get_g2_tau(self, tau, ops):
 
         N = len(tau)
-        G4 = np.zeros((N, N, N), dtype=np.complex)
+        G4 = np.zeros((N, N, N), dtype=complex)
         ops = np.array(ops)
 
         for tidx, tetra in enumerate(CubeTetras(tau)):
@@ -237,7 +236,7 @@ class SparseExactDiagonalization(object):
         assert(taus.shape[0] == 2)
         assert(len(ops) == Nop)
 
-        G = np.zeros((taus.shape[-1]), dtype=np.complex)
+        G = np.zeros((taus.shape[-1]), dtype=complex)
 
         E = self.E[None, :]
 
@@ -275,7 +274,7 @@ class SparseExactDiagonalization(object):
         assert(len(ops) == 4)
 
         Nop = 4
-        G = np.zeros((taus.shape[-1]), dtype=np.complex)
+        G = np.zeros((taus.shape[-1]), dtype=complex)
 
         E = self.E[None, :]
 
@@ -315,7 +314,7 @@ class SparseExactDiagonalization(object):
         G^{(2)}(\tau) = -1/Z < O_1(\tau) O_2(0) >
         """
 
-        G = np.zeros((len(tau)), dtype=np.complex)
+        G = np.zeros((len(tau)), dtype=complex)
 
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
 
@@ -348,7 +347,7 @@ class SparseExactDiagonalization(object):
         op1_eig, op2_eig = self._operators_to_eigenbasis([op1, op2])
 
         # -- Compute Lehman sum for all operator combinations
-        G = np.zeros((len(iwn)), dtype=np.complex)
+        G = np.zeros((len(iwn)), dtype=complex)
         G = np.einsum('nm,mn,nm,znm->z', op1_eig, op2_eig, M, freq)
         G /= self.Z
 
@@ -393,7 +392,7 @@ class SparseExactDiagonalization(object):
 
         H = self.H
 
-        Gc = np.zeros((Norder), dtype=np.complex)
+        Gc = np.zeros((Norder), dtype=complex)
         ba, bc = op1, op2
 
         Hba = ba
@@ -414,7 +413,7 @@ class SparseExactDiagonalization(object):
 
         Nop = Gc.shape[-1]
         Nw = len(iwn)
-        G = np.zeros((Nw, Nop, Nop), dtype=np.complex)
+        G = np.zeros((Nw, Nop, Nop), dtype=complex)
         iwn_idx = np.nonzero(iwn)[0]  # -- Only eval for non-zero freq.
         for idx, gc in enumerate(Gc):
             G[iwn_idx, :, :] += \

@@ -115,7 +115,7 @@ def test_quartic(verbose=False):
 
     # -- Check hermitian
     np.testing.assert_array_almost_equal(
-        np.mat(T_ab) * np.mat(T_ab).H, np.eye(2))
+        T_ab @ T_ab.T.conjugate(), np.eye(2))
 
     I = np.eye(num_spins)
     T_ab_spin = np.kron(T_ab, I)
