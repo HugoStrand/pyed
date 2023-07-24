@@ -112,7 +112,7 @@ class TriqsExactDiagonalization(object):
         op1_mat = self.rep.sparse_matrix(op1)
         op2_mat = self.rep.sparse_matrix(op2)
 
-        iwn = np.array([iwn.value for iwn in g_iwn.mesh])
+        iwn = np.array([complex(iwn.value) for iwn in g_iwn.mesh])
 
         g_iwn.data[:] = self.ed.get_frequency_greens_function_component(
             iwn, op1_mat, op2_mat, self.xi(g_iwn.mesh))
