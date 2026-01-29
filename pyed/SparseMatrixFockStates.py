@@ -157,3 +157,111 @@ class SparseMatrixCreationOperators:
         return cdagger
 
 # ----------------------------------------------------------------------
+
+class SparseMatrixBosonicCreationOperators:
+
+    """ Generator for sparse-matrix representations of (soft-core)
+    bosonic operators for N : bosonic modes with a maximal boson
+    occupation Nmax. """
+
+    # ------------------------------------------------------------------
+    def __init__(self, N, Nmax):
+
+        self.N, self.Nmax = N, Nmax
+        self.Ngamma = Nmax**N
+
+        # -- Construct bosonic manybody operators
+        
+        self.b_dag = []
+        self.I = sparse.identity(self.Ngamma)
+
+        for fidx in range(self.N):
+            b_dag = self._build_destruction_operator(fidx).getH()
+            self.b_dag.append(b_dag)
+
+    # ------------------------------------------------------------------
+    def _build_destruction_operator(self, fidx):
+
+        J = np.arange(self.Ngamma, dtype=np.uint)
+        I = np.zeros(self.Ngamma, dtype=np.uint)
+        D = np.zeros(self.Ngamma, dtype=float)
+
+        for idx in J:
+
+            s = self._cubic_idx_to_state(idx, self.Nmax, self.N)
+            n = s[fidx]
+
+            if n > 0:
+                s[fidx] -= 1
+                I[idx] = self._cubic_state_to_idx(s, self.Nmax)
+                D[idx] = np.sqrt(n)
+            else:
+                D[idx] = 0
+
+        b = sparse.coo_matrix(
+            (D, (I, J)), 
+            shape=(self.Ngamma, self.Ngamma)).tocsr()
+
+        # -- Remove zero occurencies (too lazy to fix them above.. FIXME)
+        b.eliminate_zeros()
+
+        return b
+
+    # ------------------------------------------------------------------
+    def _cubic_state_to_idx(self, s, Nmax):
+
+        idx = 0
+        N = len(s)
+
+        for fidx, n in enumerate(s):
+            n = int(n)
+            idx += n * Nmax**(N - fidx - 1)
+
+        return idx
+
+    # ------------------------------------------------------------------
+    def _cubic_idx_to_state(self, idx, Nmax, N):
+
+        rest = idx
+        s = np.zeros(N, dtype=np.uint)
+
+        for fidx in range(N):
+            factor = Nmax**(N - fidx - 1)
+            s[fidx] = rest / factor # -- Nb! Integer division intended
+            rest = np.mod(rest, factor)
+
+        return s
+
+
+# ----------------------------------------------------------------------
+
+class SparseMatrixFermiBoseCreationOperators:
+
+    """ Generator for sparse-matrix representations of
+    fermions and (soft-core) bosonic operators for
+
+    Nf : fermionic modes
+    Nb : bosonic modes
+    Nb_max : maximal boson occupation """
+
+    # ------------------------------------------------------------------
+    def __init__(self, Nf, Nb, Nb_max):
+
+        self.Nf, self.Nb, self.Nb_max = Nf, Nb, Nb_max
+
+        self.fops = SparseMatrixCreationOperators(self.Nf)
+        self.bops = SparseMatrixBosonicCreationOperators(self.Nb, self.Nb_max)
+
+        self.If = self.fops.I
+        self.Ib = self.bops.I
+        self.I = sparse.kron(self.If, self.Ib)
+
+        self.c_dag = []
+        for c_dag in self.fops.c_dag:
+            c_dag_ext = sparse.kron(c_dag, self.Ib, format='coo')
+            self.c_dag.append(c_dag_ext)
+
+        self.b_dag = []
+        for b_dag in self.bops.b_dag:
+            b_dag_ext = sparse.kron(self.If, b_dag, format='coo')
+            self.b_dag.append(b_dag_ext)
