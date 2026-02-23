@@ -13,7 +13,7 @@ from triqs.operators.util import get_mkind
 from triqs.operators import c, c_dag, Operator, dagger
 
 # ----------------------------------------------------------------------
-def h_int_kanamori_d(spin_names, orb_names, U, Uprime, J_hund,
+def h_int_kanamori_d(spin_names, num_orbitals, U, Uprime, J_hund,
                      off_diag=None, map_operator_structure=None, H_dump=None, d=None):
     r"""
     Create a Kanamori Hamiltonian using the density-density, spin-fip and pair-hopping interactions.
@@ -66,11 +66,11 @@ def h_int_kanamori_d(spin_names, orb_names, U, Uprime, J_hund,
     # density terms:
     if H_dump: H_dump_file.write("Density-density terms:" + '\n')
     for s1, s2 in product(spin_names,spin_names):
-        for a1, a2 in product(orb_names,orb_names):
+        for a1, a2 in product(range(num_orbitals), repeat=2):
             if (s1==s2):
-                U_val = U[orb_names.index(a1),orb_names.index(a2)]
+                U_val = U[a1, a2]
             else:
-                U_val = Uprime[orb_names.index(a1),orb_names.index(a2)]
+                U_val = Uprime[a1, a2]
 
             H_term = 0.5 * U_val * d_dag(*mkind(s1,a1)) * d(*mkind(s1,a1)) * d_dag(*mkind(s2,a2)) * d(*mkind(s2,a2))
             H += H_term
@@ -86,7 +86,7 @@ def h_int_kanamori_d(spin_names, orb_names, U, Uprime, J_hund,
     for s1, s2 in product(spin_names,spin_names):
         if (s1==s2):
             continue
-        for a1, a2 in product(orb_names,orb_names):
+        for a1, a2 in product(range(num_orbitals), repeat=2):
             if (a1==a2):
                 continue
             H_term = -0.5 * J_hund * d_dag(*mkind(s1,a1)) * d(*mkind(s2,a1)) * d_dag(*mkind(s2,a2)) * d(*mkind(s1,a2))
@@ -103,7 +103,7 @@ def h_int_kanamori_d(spin_names, orb_names, U, Uprime, J_hund,
     for s1, s2 in product(spin_names,spin_names):
         if (s1==s2):
             continue
-        for a1, a2 in product(orb_names,orb_names):
+        for a1, a2 in product(range(num_orbitals), repeat=2):
             if (a1==a2):
                 continue
             H_term = 0.5 * J_hund * d_dag(*mkind(s1,a1)) * d_dag(*mkind(s2,a1)) * d(*mkind(s2,a2)) * d(*mkind(s1,a2))

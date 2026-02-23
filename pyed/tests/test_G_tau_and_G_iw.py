@@ -14,7 +14,7 @@ import numpy as np
 from triqs.gf import Gf
 from triqs.gf import MeshImTime, MeshImFreq
 
-from triqs.gf import GfImTime, GfImFreq
+from triqs.gf import Gf, MeshImTime, MeshImFreq
 from triqs.operators import c, c_dag
 
 from triqs.gf import inverse, iOmega_n, Fourier
@@ -43,38 +43,14 @@ def test_cf_G_tau_and_G_iw_nonint(verbose=False):
     # ------------------------------------------------------------------
     # -- Single-particle Green's functions
 
-    G_tau = GfImTime(
-        beta=beta,
-        statistic='Fermion',
-        n_points=ntau,
-        target_shape=(
-            1,
-            1))
-    G_iw = GfImFreq(
-        beta=beta,
-        statistic='Fermion',
-        n_points=niw,
-        target_shape=(
-            1,
-            1))
+    G_tau = Gf(mesh=MeshImTime(beta, 'Fermion', n_tau=ntau), target_shape=[1,1])
+    G_iw = Gf(mesh=MeshImFreq(beta, 'Fermion', n_iw=niw), target_shape=[1,1])
 
     G_iw << inverse(iOmega_n - eps)
     G_tau << Fourier(G_iw)
 
-    G_tau_ed = GfImTime(
-        beta=beta,
-        statistic='Fermion',
-        n_points=ntau,
-        target_shape=(
-            1,
-            1))
-    G_iw_ed = GfImFreq(
-        beta=beta,
-        statistic='Fermion',
-        n_points=niw,
-        target_shape=(
-            1,
-            1))
+    G_tau_ed = Gf(mesh=MeshImTime(beta, 'Fermion', n_tau=ntau), target_shape=[1,1])
+    G_iw_ed = Gf(mesh=MeshImFreq(beta, 'Fermion', n_iw=niw), target_shape=[1,1])
 
     ed.set_g2_tau(G_tau_ed[0, 0], c(0, 0), c_dag(0, 0))
     ed.set_g2_iwn(G_iw_ed[0, 0], c(0, 0), c_dag(0, 0))

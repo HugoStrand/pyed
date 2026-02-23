@@ -100,7 +100,7 @@ def test_quartic(verbose=False):
 
     up, do = 0, 1
     spin_names = [up, do]
-    orb_names = list(range(num_orbitals))
+    #orb_names = list(range(num_orbitals))
 
     U_ab, UPrime_ab = U_matrix_kanamori(n_orb=2, U_int=U, J_hund=J)
 
@@ -121,7 +121,7 @@ def test_quartic(verbose=False):
     T_ab_spin = np.kron(T_ab, I)
 
     H_int = h_int_kanamori(
-        spin_names, orb_names, U_ab, UPrime_ab, J_hund=J,
+        spin_names, num_orbitals, U_ab, UPrime_ab, J_hund=J,
         off_diag=True, map_operator_structure=None, H_dump=None)
 
     op_imp = [c(up, 0), c(do, 0), c(up, 1), c(do, 1)]
@@ -134,7 +134,7 @@ def test_quartic(verbose=False):
     from transform_kanamori import h_int_kanamori_transformed
 
     Ht_int_ref = h_int_kanamori_transformed(
-        [T_ab, T_ab], spin_names, orb_names, U_ab, UPrime_ab, J_hund=J,
+        [T_ab, T_ab], spin_names, num_orbitals, U_ab, UPrime_ab, J_hund=J,
         off_diag=True, map_operator_structure=None, H_dump=None)
 
     if verbose:

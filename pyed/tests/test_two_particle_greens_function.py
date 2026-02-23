@@ -61,10 +61,7 @@ def test_two_particle_greens_function():
     # ------------------------------------------------------------------
     # -- single particle Green's functions
 
-    g_tau = GfImTime(name=r'$g$', beta=beta,
-                     statistic='Fermion', n_points=100,
-                     target_shape=(1, 1))
-
+    g_tau = Gf(mesh=MeshImTime(beta, 'Fermion', n_tau=100), target_shape=[1,1])
     ed.set_g2_tau(g_tau[0, 0], c(up, 0), c_dag(up, 0))
 
     # ------------------------------------------------------------------
