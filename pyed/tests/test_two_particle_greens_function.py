@@ -12,8 +12,8 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from triqs.gf import Gf, GfImTime
-from triqs.gf import MeshImTime, MeshProduct
+from triqs.gfs import Gf, GfImTime
+from triqs.gfs import MeshImTime, MeshProduct
 
 from triqs.operators import c, c_dag
 

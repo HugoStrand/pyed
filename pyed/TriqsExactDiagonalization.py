@@ -12,7 +12,7 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from triqs.gf import MeshImTime, MeshDLRImTime, MeshProduct, Idx
+from triqs.gfs import MeshImTime, MeshDLRImTime, MeshProduct, Idx
 from triqs.operators import dagger
 from triqs.utility import mpi
 

@@ -11,13 +11,13 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from triqs.gf import Gf
-from triqs.gf import MeshImTime, MeshImFreq
+from triqs.gfs import Gf
+from triqs.gfs import MeshImTime, MeshImFreq
 
-from triqs.gf import Gf, MeshImTime, MeshImFreq
+from triqs.gfs import Gf, MeshImTime, MeshImFreq
 from triqs.operators import c, c_dag
 
-from triqs.gf import inverse, iOmega_n, Fourier
+from triqs.gfs import inverse, iOmega_n, Fourier
 
 # ----------------------------------------------------------------------
 

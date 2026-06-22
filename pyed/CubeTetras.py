@@ -15,7 +15,7 @@ import numpy as np
 
 
 def Idxs(integer_index_list):
-    from triqs.gf import Idx
+    from triqs.gfs import Idx
     return tuple(Idx(i) for i in integer_index_list)
 
 # ----------------------------------------------------------------------
@@ -23,7 +23,7 @@ def Idxs(integer_index_list):
 
 def zero_outer_planes_and_equal_times(g4_tau):
 
-    from triqs.gf import Idx
+    from triqs.gfs import Idx
     beta = g4_tau.mesh.components[0].beta
 
     for idxs, (t1, t2, t3) in enumerate_tau3(g4_tau):
@@ -38,7 +38,7 @@ def zero_outer_planes_and_equal_times(g4_tau):
 
 def enumerate_tau3(g4_tau, make_real=True, beta=None):
 
-    from triqs.gf import MeshImTime, MeshProduct
+    from triqs.gfs import MeshImTime, MeshProduct
 
     assert(isinstance(g4_tau.mesh, MeshProduct))
 

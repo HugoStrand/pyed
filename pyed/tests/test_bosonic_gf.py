@@ -6,8 +6,8 @@ Author: Hugo U. R. Strand (2026), hugo.strand@gmail.com """
 import numpy as np
 
 
-from triqs.gf import MeshImFreq, MeshImTime
-from triqs.gf import Gf, inverse, iOmega_n, make_gf_from_fourier
+from triqs.gfs import MeshImFreq, MeshImTime
+from triqs.gfs import Gf, inverse, iOmega_n, make_gf_from_fourier
 
 
 from pyed.SparseMatrixFockStates import SparseMatrixBosonicCreationOperators

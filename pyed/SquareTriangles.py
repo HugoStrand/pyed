@@ -29,7 +29,7 @@ def zero_outer_planes_and_equal_times(g3_tau):
 
 def enumerate_tau2(g3_tau, make_real=True, beta=None):
 
-    from triqs.gf import MeshImTime, MeshProduct
+    from triqs.gfs import MeshImTime, MeshProduct
 
     assert(isinstance(g3_tau.mesh, MeshProduct))
 
