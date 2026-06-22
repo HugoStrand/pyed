@@ -12,7 +12,7 @@ import numpy as np
 
 # ----------------------------------------------------------------------
 
-from triqs.gf import MeshImTime, MeshProduct, Idx
+from triqs.gf import MeshImTime, MeshDLRImTime, MeshProduct, Idx
 from triqs.operators import dagger
 from triqs.utility import mpi
 
@@ -77,7 +77,7 @@ class TriqsExactDiagonalization(object):
     # ------------------------------------------------------------------
     def set_g2_tau(self, g_tau, op1, op2):
 
-        assert(isinstance(g_tau.mesh, MeshImTime))
+        assert(isinstance(g_tau.mesh, MeshImTime) or isinstance(g_tau.mesh, MeshDLRImTime))
         assert(self.beta == g_tau.mesh.beta)
         assert(g_tau.target_shape == ())
 
